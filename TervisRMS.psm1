@@ -91,6 +91,8 @@ function Get-BackOfficeComputersRunningSQL {
     where RunningSQL -EQ $true | 
     select -ExpandProperty BackOfficeComputerName
 }
+﻿$SQLServerName = ""
+$DataBaseName = ""
 
 function Invoke-SQL {
     param(
@@ -136,7 +138,7 @@ function ConvertFrom-DataRow {
     }
 }
 
-function Get-RMSDatabaseName {
+function Get-RMSBackOfficeDatabaseName {
     param(
         $BackOfficeComputerName
     )
@@ -211,7 +213,7 @@ function Get-RMSBatchNumber {
         $DataBaseName,
         $SQLServerName
     )
-    $Query = "select BatchNumber from [batch] where dbtimestamp > $LastDBTimeStamp"
+    $Query = "select BatchNumber from [batch] where dbtimestamp > $LastDBTimeStamp AND Status = 7"
 
     Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SQLServerName -Query $Query | 
     Select -ExpandProperty BatchNumber
@@ -229,7 +231,6 @@ function Get-RMSBatch {
 
     Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SQLServerName -Query $Query
 }
-
 
 function Get-RMSSalesBatch {
     $BackOfficeServerAndDatabaseNames = Get-BackOfficeDatasbaseNames
@@ -249,17 +250,63 @@ function Get-RMSSalesBatch {
 
     $BatchNumbers = Get-RMSBatchNumber -LastDBTimeStamp "0x000000000639A82E" -SQLServerName "3023MYBO1-PC" -DataBaseName "MontereyStore"
     $Batches = Get-RMSBatch -BatchNumber $BatchNumbers -DataBaseName "MontereyStore" -SQLServerName "3023MYBO1-PC"
+    $Transactions = Get-RMSTransaction -BatchNumber $BatchNumbers -DataBaseName "MontereyStore" -SQLServerName "3023MYBO1-PC"
+
+
+     $XXOE_HEADERS_IFACE_ALL = @{
+        ORDER_SOURCE_ID = 1022;
+        ORIG_SYS_DOCUMENT_REF = "111-111"; #//sales batch + "-" + storecode
+        ORG_ID = 82;
+        ORDERED_DATE = Get-Date;
+        ORDER_TYPE = "Store Order";
+        SOLD_TO_ORG_ID = 1; # Store code? 22060
+        SHIP_FROM_ORG = "STO";
+        CUSTOMER_NUMBER = "1131597";# // Not sure
+        BOOKED_FLAG = "Y";
+        ATTRIBUTE6 = "Y";# // No idea
+        CREATED_BY = -1; # // Not sure
+        CREATION_DATE = Get-Date;
+        LAST_UPDATED_BY = -1;
+        LAST_UPDATE_DATE = Get-Date;
+        #//REQUEST_ID = 1;# // Not sure how to generate
+        OPERATION_CODE = "INSERT";
+        PROCESS_FLAG = "N";
+        SOURCE_NAME = "RMS";
+        OPERATING_UNIT_NAME = "Tervis Operating Unit";
+        CREATED_BY_NAME = "BIZTALK";
+        LAST_UPDATED_BY_NAME = "BIZTALK"
+    }
+
 }
 
 function Get-RMSTransaction {
     param(
-        $BatchNumber
+        [Parameter(Mandatory = $True, ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)]$BatchNumber,
+        [Parameter(Mandatory = $True)]$DataBaseName,
+        [Parameter(Mandatory = $True)]$SQLServerName
     )
-    $BatchNumberAsCommanSepratedList = $BatchNumber -join ","
+    process {
+        $BatchNumberAsCommanSepratedList = $BatchNumber -join ","
 
-    $Query = "select * from [Transaction] where BatchNumber in ($BatchNumberAsCommanSepratedList)"
+        $Query = "select * from [Transaction] where BatchNumber in ($BatchNumberAsCommanSepratedList)"
 
-    Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SQLServerName -Query $Query
+        Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SQLServerName -Query $Query
+    }
+}
+
+function Get-RMSTransactionEntry {
+    param(
+        [Parameter(Mandatory = $True, ValueFromPipelineByPropertyName = $True)]$TransactionNumber,
+        [Parameter(Mandatory = $True)]$DataBaseName,
+        [Parameter(Mandatory = $True)]$SQLServerName
+    )
+    process {
+        $TransactionNumberAsCommanSepratedList = $TransactionNumber -join ","
+
+        $Query = "select * from [TransactionEntry] where TransactionNumber in ($TransactionNumberAsCommanSepratedList)"
+
+        Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SQLServerName -Query $Query
+    }
 }
 
 function Get-BackOfficeDatasbaseNames {
@@ -267,7 +314,7 @@ function Get-BackOfficeDatasbaseNames {
 
     $Responses = Start-ParrallelWork -ScriptBlock {
         param($Parameter) 
-        Get-RMSDatabaseName -BackOfficeComputerName $Parameter
+        Get-RMSBackOfficeDatabaseName -BackOfficeComputerName $Parameter
     } -Parameters $BackOfficeComputerNames
     
     $Responses | 
