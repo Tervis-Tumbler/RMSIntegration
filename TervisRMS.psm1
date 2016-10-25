@@ -91,52 +91,6 @@ function Get-BackOfficeComputersRunningSQL {
     where RunningSQL -EQ $true | 
     select -ExpandProperty BackOfficeComputerName
 }
-﻿$SQLServerName = ""
-$DataBaseName = ""
-
-function Invoke-SQL {
-    param(
-        [string] $dataSource = ".\SQLEXPRESS",
-        [string] $database = "MasterData",
-        [string] $sqlCommand = $(throw "Please specify a query."),
-        [string]$SQLUser,
-        [String]$SQLPassword
-      )
-
-    $connectionString = "Server=$dataSource;Database=$database;User Id=$SQLUser;Password=$SQLPassword;"
-
-    $connection = new-object system.data.SqlClient.SQLConnection($connectionString)
-    $command = new-object system.data.sqlclient.sqlcommand($sqlCommand,$connection)
-    $connection.Open()
-    
-    $adapter = New-Object System.Data.sqlclient.sqlDataAdapter $command
-    $dataset = New-Object System.Data.DataSet
-    $adapter.Fill($dataSet) | Out-Null
-    
-    $connection.Close()
-    $dataSet.Tables 
-}
-
-function ConvertFrom-DataRow {
-    param(
-        [Parameter(
-            Position=0, 
-            Mandatory=$true, 
-            ValueFromPipeline=$true,
-            ValueFromPipelineByPropertyName=$true
-        )]
-        $DataRow
-    )
-    process {
-        $DataRowProperties = $DataRow | GM -MemberType Properties | select -ExpandProperty name
-        $DataRowWithLimitedProperties = $DataRow | select $DataRowProperties
-        $DataRowAsPSObject = $DataRowWithLimitedProperties | % { $_ | ConvertTo-Json | ConvertFrom-Json }
-        
-        if($DataRowAsPSObject | GM | where membertype -NE "Method") {
-            $DataRowAsPSObject
-        }
-    }
-}
 
 function Get-RMSBackOfficeDatabaseName {
     param(
@@ -159,15 +113,15 @@ function Get-RMSBackOfficeDatabaseName {
     order by TotalSizeMB desc
 "@
     $Results = Invoke-RMSSQL -DataBaseName "master" -SQLServerName $BackOfficeComputerName -Query $Query | 
-    TervisRMS\ConvertFrom-DataRow
+    ConvertFrom-DataRow
 
     $RMSDatabaseName = $Results | 
     sort TotalSizeMB -Descending | 
     select -First 1 -ExpandProperty Name
 
     [pscustomobject][ordered]@{
-        BackOfficeComputerName = $BackOfficeComputerName;
-        RMSDatabaseName = $RMSDatabaseName;        
+        BackOfficeComputerName = $BackOfficeComputerName
+        RMSDatabaseName = $RMSDatabaseName
     }
 }
 
@@ -200,11 +154,8 @@ function Invoke-RMSSQL {
         $SQLServerName,
         $Query
     )
-    $SQLUser = Get-Content "$env:USERPROFILE\Documents\RMSSQLUser.txt" | ConvertTo-SecureString | Get-ValueFromSecureString
-    $SQLPassword = Get-Content "$env:USERPROFILE\Documents\RMSSQLPassword.txt" | ConvertTo-SecureString | Get-ValueFromSecureString
-
-    TervisRMS\Invoke-SQL -dataSource $SQLServerName -database $DataBaseName -sqlCommand $Query -SQLUser $SQLUser -SQLPassword $SQLPassword | 
-    TervisRMS\ConvertFrom-DataRow
+    $Credential = Get-PasswordstateCredential -PasswordID 56
+    Invoke-SQL -dataSource $SQLServerName -database $DataBaseName -sqlCommand $Query | ConvertFrom-DataRow
 }
 
 function Get-RMSBatchNumber {
