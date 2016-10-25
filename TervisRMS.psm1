@@ -126,18 +126,11 @@ function Get-RMSBackOfficeDatabaseName {
 }
 
 function New-RMSSQLDatabaseCredentials {
-    param(
-        $SQLUser,
-        $SQLPassword
+    param (
+        $Credential = $(Get-credential -Message "Enter RMS back office SQL server databse user credentials" ) 
     )
 
-    $SQLUser | ConvertTo-SecureString -AsPlainText -Force |
-    ConvertFrom-SecureString |
-    Out-File -FilePath "$env:USERPROFILE\Documents\RMSSQLUser.txt"
-
-    $SQLPassword | ConvertTo-SecureString -AsPlainText -Force |
-    ConvertFrom-SecureString |
-    Out-File -FilePath "$env:USERPROFILE\Documents\RMSSQLPassword.txt"
+    $Credential | Export-Clixml -Path "$env:USERPROFILE\RMSSQLCredential.txt"
 }
 
 function Invoke-RMSSQL {
@@ -147,7 +140,7 @@ function Invoke-RMSSQL {
         $Query
     )
     $Credential = Get-PasswordstateCredential -PasswordID 56
-    Invoke-SQL -dataSource $SQLServerName -database $DataBaseName -sqlCommand $Query | ConvertFrom-DataRow
+    Invoke-SQL -dataSource $SQLServerName -database $DataBaseName -sqlCommand $Query -Credential $Credential | ConvertFrom-DataRow
 }
 
 function Get-RMSBatchNumber {
