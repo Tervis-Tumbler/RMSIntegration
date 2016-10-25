@@ -125,14 +125,6 @@ function Get-RMSBackOfficeDatabaseName {
     }
 }
 
-function Get-ValueFromSecureString {
-    param(
-        [Parameter(Mandatory = $True, ValueFromPipeline = $True)]
-        $SecureString
-    )
-    (New-Object System.Management.Automation.PSCredential 'N/A', $SecureString).GetNetworkCredential().Password
-}
-
 function New-RMSSQLDatabaseCredentials {
     param(
         $SQLUser,
