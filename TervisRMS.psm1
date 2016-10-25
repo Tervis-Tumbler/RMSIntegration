@@ -112,8 +112,7 @@ function Get-RMSBackOfficeDatabaseName {
     from sys.databases db
     order by TotalSizeMB desc
 "@
-    $Results = Invoke-RMSSQL -DataBaseName "master" -SQLServerName $BackOfficeComputerName -Query $Query | 
-    ConvertFrom-DataRow
+    $Results = Invoke-RMSSQL -DataBaseName "master" -SQLServerName $BackOfficeComputerName -Query $Query
 
     $RMSDatabaseName = $Results | 
     sort TotalSizeMB -Descending | 
