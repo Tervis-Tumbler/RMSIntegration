@@ -168,7 +168,8 @@ function Get-RMSBatch {
 }
 
 function Get-RMSSalesBatch {
-    $BackOfficeServerAndDatabaseNames = Get-BackOfficeDatasbaseNames
+    $BackOfficeServerAndDatabaseNames = Get-BackOfficeDatabaseNames
+    #$BackOfficeServerAndDatabaseNames = Get-ComputerDatabaseNames -OUPath "OU=Back Office Computers,OU=Remote Store Computers,OU=Computers,OU=Stores,OU=Departments,DC=tervis,DC=prv"
 
     #$Responses = Start-ParallelWork -ScriptBlock {
     #    param($Parameter)
@@ -181,6 +182,7 @@ function Get-RMSSalesBatch {
 
     foreach ($BackOfficeServerAndDatabaseName in $BackOfficeServerAndDatabaseNames) {
         Get-RMSBatch -DataBaseName $BackOfficeServerAndDatabaseName.RMSDatabasename -SQLServerName $BackOfficeServerAndDatabaseName.backofficecomputername -LastDBTimeStamp
+        #Get-RMSBatch -DataBaseName $BackOfficeServerAndDatabaseName.RMSDatabasename -SQLServerName $BackOfficeServerAndDatabaseName.ComputerName -LastDBTimeStamp
     }
 
     $BatchNumbers = Get-RMSBatchNumber -LastDBTimeStamp "0x000000000639A82E" -SQLServerName "3023MYBO1-PC" -DataBaseName "MontereyStore"
@@ -244,7 +246,7 @@ function Get-RMSTransactionEntry {
     }
 }
 
-function Get-BackOfficeDatasbaseNames {
+function Get-BackOfficeDatabaseNames {
     $BackOfficeComputerNames = Get-BackOfficeComputersRunningSQL
 
     $Responses = Start-ParallelWork -ScriptBlock {
@@ -254,4 +256,115 @@ function Get-BackOfficeDatasbaseNames {
     
     $Responses | 
     select backofficecomputername, RMSDatabasename
+}
+
+function Get-ComputersInOU {
+    param(
+        [Switch]$Online = $True,
+        [Parameter(Mandatory)]$OUPath
+    )
+
+    $ComputerNames = Get-ADComputer -Filter * -SearchBase $OUPath |
+        Select -ExpandProperty name
+
+    $Responses = Start-ParallelWork -ScriptBlock {
+        param($Parameter)
+        [pscustomobject][ordered]@{
+            ComputerName = $Parameter;
+            Online = $(Test-Connection -ComputerName $Parameter -Count 1 -Quiet);        
+        }
+    } -Parameters $ComputerNames
+
+    $Responses | 
+        where Online -EQ $true |
+        Select -ExpandProperty ComputerName
+}
+
+function Get-ComputersWhereConditionTrue {
+    param(
+        $ComputerNames,
+        $ConditionScriptBlock
+    )
+
+    $Responses = Start-ParallelWork -ScriptBlock {
+        param($Parameter)
+        $ConditionResult = & $ConditionScriptBlock -Parameter $Parameter
+
+        [pscustomobject][ordered]@{
+            ComputerName = $Parameter;
+            ConditionResult = $ConditionResult;        
+        }        
+    } -Parameters $ComputerNames
+    
+    $Responses | 
+        where ConditionResult -EQ $true | 
+        select -ExpandProperty ComputerName
+}
+
+function Get-ComputersRunningSQL {
+    param (
+        [Parameter(Mandatory)]$OUPath
+    )
+    
+    $ComputerNames = Get-ComputersInOU -Online -OUPath $OUPath
+
+    $Responses = Start-ParallelWork -ScriptBlock {
+        param($Parameter)
+        [pscustomobject][ordered]@{
+            ComputerName = $Parameter;
+            RunningSQL = $(Test-NetConnection -ComputerName $Parameter -Port 1433 -InformationLevel Quiet);        
+        }        
+    } -Parameters $ComputerNames
+    
+    $Responses | 
+        where RunningSQL -EQ $true | 
+        select -ExpandProperty ComputerName
+}
+
+function Get-RMSDatabaseName {
+    param(
+       [Parameter(Mandatory)]$ComputerName
+    )
+
+    $Query = @"
+    with fs
+    as
+    (
+        select database_id, type, size * 8.0 / 1024 size
+        from sys.master_files
+    )
+    select 
+        name,
+        (select sum(size) from fs where type = 0 and fs.database_id = db.database_id) DataFileSizeMB,
+        (select sum(size) from fs where type = 1 and fs.database_id = db.database_id) LogFileSizeMB,
+	    (select sum(size) from fs where type = 0 and fs.database_id = db.database_id) + (select sum(size) from fs where type = 1 and fs.database_id = db.database_id) TotalSizeMB
+    from sys.databases db
+    order by TotalSizeMB desc
+"@
+    $Results = Invoke-RMSSQL -DataBaseName "master" -SQLServerName $ComputerName -Query $Query
+
+    $RMSDatabaseName = $Results | 
+        sort TotalSizeMB -Descending | 
+        select -First 1 -ExpandProperty Name
+
+    [pscustomobject][ordered]@{
+        ComputerName = $ComputerName
+        RMSDatabaseName = $RMSDatabaseName
+    }
+}
+
+function Get-ComputerDatabaseNames {
+    param(
+       [Parameter(Mandatory)]$OUPath
+    )
+
+    $ComputerNames = Get-ComputersRunningSQL -OUPath $OUPath
+
+    $Responses = Start-ParallelWork -ScriptBlock {
+        param($Parameter) 
+        Get-RMSDatabaseName -ComputerName $Parameter
+    } -Parameters $ComputerNames
+    
+    $Responses | 
+        select ComputerName, RMSDatabasename
 }
