@@ -189,26 +189,26 @@ function Get-RMSSalesBatch {
 
 
      $XXOE_HEADERS_IFACE_ALL = @{
-        ORDER_SOURCE_ID = 1022;
-        ORIG_SYS_DOCUMENT_REF = "111-111"; #//sales batch + "-" + storecode
-        ORG_ID = 82;
-        ORDERED_DATE = Get-Date;
-        ORDER_TYPE = "Store Order";
-        SOLD_TO_ORG_ID = 1; # Store code? 22060
-        SHIP_FROM_ORG = "STO";
-        CUSTOMER_NUMBER = "1131597";# // Not sure
-        BOOKED_FLAG = "Y";
-        ATTRIBUTE6 = "Y";# // No idea
-        CREATED_BY = -1; # // Not sure
-        CREATION_DATE = Get-Date;
-        LAST_UPDATED_BY = -1;
-        LAST_UPDATE_DATE = Get-Date;
-        #//REQUEST_ID = 1;# // Not sure how to generate
-        OPERATION_CODE = "INSERT";
-        PROCESS_FLAG = "N";
-        SOURCE_NAME = "RMS";
-        OPERATING_UNIT_NAME = "Tervis Operating Unit";
-        CREATED_BY_NAME = "BIZTALK";
+        ORDER_SOURCE_ID = 1022
+        ORIG_SYS_DOCUMENT_REF = "111-111" #//sales batch + "-" + storecode
+        ORG_ID = 82
+        ORDERED_DATE = Get-Date
+        ORDER_TYPE = "Store Order"
+        SOLD_TO_ORG_ID = 1 # Store code? 22060
+        SHIP_FROM_ORG = "STO"
+        CUSTOMER_NUMBER = "1131597"# // Not sure
+        BOOKED_FLAG = "Y"
+        ATTRIBUTE6 = "Y"# // No idea
+        CREATED_BY = -1 # // Not sure
+        CREATION_DATE = Get-Date
+        LAST_UPDATED_BY = -1
+        LAST_UPDATE_DATE = Get-Date
+        #//REQUEST_ID = 1# // Not sure how to generate
+        OPERATION_CODE = "INSERT"
+        PROCESS_FLAG = "N"
+        SOURCE_NAME = "RMS"
+        OPERATING_UNIT_NAME = "Tervis Operating Unit"
+        CREATED_BY_NAME = "BIZTALK"
         LAST_UPDATED_BY_NAME = "BIZTALK"
     }
 
