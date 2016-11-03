@@ -1,4 +1,4 @@
-﻿function Start-ParrallelWork {
+﻿function Start-ParallelWork {
     param (
         $ScriptBlock,
         $Parameters
@@ -37,7 +37,7 @@ function Get-BackOfficeComputers {
     $BackOfficeComputerNames = Get-ADComputer -Filter * -SearchBase "OU=Back Office Computers,OU=Remote Store Computers,OU=Computers,OU=Stores,OU=Departments,DC=tervis,DC=prv" |
     Select -ExpandProperty name
 
-    $Responses = Start-ParrallelWork -ScriptBlock {
+    $Responses = Start-ParallelWork -ScriptBlock {
         param($Parameter)
         [pscustomobject][ordered]@{
             BackOfficeComputerName = $Parameter;
@@ -56,7 +56,7 @@ function Get-BackOfficeComputersWhereConditionTrue {
         $ConditionScriptBlock
     )
 
-    $Responses = Start-ParrallelWork -ScriptBlock {
+    $Responses = Start-ParallelWork -ScriptBlock {
         param($Parameter)
         $ConditionResult = & $ConditionScriptBlock -Parameter $Parameter
 
@@ -79,7 +79,7 @@ function Get-BackOfficeComputersRunningSQL {
     #    Test-NetConnection -ComputerName $Parameter -Port 1433 -InformationLevel Quiet
     #}
 
-    $Responses = Start-ParrallelWork -ScriptBlock {
+    $Responses = Start-ParallelWork -ScriptBlock {
         param($Parameter)
         [pscustomobject][ordered]@{
             BackOfficeComputerName = $Parameter;
@@ -170,7 +170,7 @@ function Get-RMSBatch {
 function Get-RMSSalesBatch {
     $BackOfficeServerAndDatabaseNames = Get-BackOfficeDatasbaseNames
 
-    #$Responses = Start-ParrallelWork -ScriptBlock {
+    #$Responses = Start-ParallelWork -ScriptBlock {
     #    param($Parameter)
     #    Get-RMSBatch -DataBaseName $Parameter.RMSDatabasename -SQLServerName $Parameter.backofficecomputername
     #} -Parameters $BackOfficeServerAndDatabaseName
@@ -247,7 +247,7 @@ function Get-RMSTransactionEntry {
 function Get-BackOfficeDatasbaseNames {
     $BackOfficeComputerNames = Get-BackOfficeComputersRunningSQL
 
-    $Responses = Start-ParrallelWork -ScriptBlock {
+    $Responses = Start-ParallelWork -ScriptBlock {
         param($Parameter) 
         Get-RMSBackOfficeDatabaseName -BackOfficeComputerName $Parameter
     } -Parameters $BackOfficeComputerNames
