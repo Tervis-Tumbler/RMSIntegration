@@ -21,6 +21,28 @@ function Get-BackOfficeComputers {
     Select -ExpandProperty BackOfficeComputerName
 }
 
+function Get-RegisterComputers {
+    param(
+        [Switch]$Online = $True
+    )
+
+    $RegisterComputerNames = Get-ADComputer -Filter * -SearchBase "OU=Register Computers,OU=Remote Store Computers,OU=Computers,OU=Stores,OU=Departments,DC=tervis,DC=prv" |
+    Select -ExpandProperty name
+
+    $Responses = Start-ParallelWork -ScriptBlock {
+        param($Parameter)
+        [pscustomobject][ordered]@{
+            RegisterComputerName = $Parameter;
+            Online = $(Test-Connection -ComputerName $Parameter -Count 1 -Quiet);        
+        }
+    } -Parameters $RegisterComputerNames
+
+    $Responses | 
+    where Online -EQ $true |
+    Select -ExpandProperty RegisterComputerName
+}
+
+
 function Get-BackOfficeComputersWhereConditionTrue {
     param(
         $BackOfficeComputerNames,
@@ -338,4 +360,39 @@ function Get-ComputerDatabaseNames {
     
     $Responses | 
         select ComputerName, RMSDatabasename
+}
+
+function Stop-SOPOSUSERProcess {
+    $RegisterComputers = Get-RegisterComputers -Online
+
+    foreach ($RegisterComputer in $RegisterComputers) {
+        (Get-WmiObject Win32_Process -ComputerName $RegisterComputer | ?{ $_.ProcessName -match "soposuser" }).Terminate()
+    }
+
+}
+
+function Get-PersonalizeItConfigFileInfo {
+    $RegisterComputers = Get-RegisterComputers -Online
+
+    foreach ($RegisterComputer in $RegisterComputers) {
+        Invoke-Command -ComputerName $RegisterComputer { Get-ChildItem "C:\Program Files\nChannel\Personalize\PersonalizeItConfig.xml" } -ErrorAction SilentlyContinue | Select-Object pscomputername,name,lastwritetime | sort lastwritetime
+    }
+
+}
+
+function Get-PersonalizeItDllFileInfo {
+    $RegisterComputers = Get-RegisterComputers -Online
+
+    foreach ($RegisterComputer in $RegisterComputers) {
+        Invoke-Command -ComputerName $RegisterComputer { Get-ChildItem "C:\Program Files\nChannel\Personalize\Personalize.dll" } -ErrorAction SilentlyContinue | Select-Object pscomputername,name,lastwritetime
+    }
+
+}
+
+function Invoke-TervisRegisterComputerGPUpdate {
+    $RegisterComputers = Get-RegisterComputers -Online
+
+    foreach ($RegisterComputer in $RegisterComputers) {
+        Invoke-GPUpdate -Computer $RegisterComputer -RandomDelayInMinutes 0 -Force
+    }
 }
