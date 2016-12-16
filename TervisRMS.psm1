@@ -1,4 +1,4 @@
-﻿#Requires -modules TervisPowerShellJobs
+﻿#Requires -modules TervisPowerShellJobs,InvokeSQL,PasswordstatePowershell
 
 function Get-BackOfficeComputers {
     param(
@@ -395,4 +395,72 @@ function Invoke-TervisRegisterComputerGPUpdate {
     foreach ($RegisterComputer in $RegisterComputers) {
         Invoke-GPUpdate -Computer $RegisterComputer -RandomDelayInMinutes 0 -Force
     }
+}
+
+function Invoke-ConvertOfflineDBToSimpleRecoverModel {
+    [CmdletBinding()]
+    param (
+        
+    )
+
+    Write-Verbose -Message "Getting online registers"
+    $OnlineRegisters = Get-RegisterComputers
+
+    <#
+    Start-ParallelWork -ScriptBlock {
+        param ($Parameter)
+        [PSCustomObject][Ordered]@{
+            ComputerName = $Parameter
+            RemoteSQLEnabled = (Get-SQLRemoteAccessEnabled -ComputerName $Parameter)
+        }
+    } -Parameters $OnlineRegisters
+
+    Get-OfflineDBTransactionLogName
+    # Get free space before
+    # Run SQL command to fix issue
+    # Get free space after
+    #>
+}
+
+function Enable-SQLRemoteAccess {
+    param (
+        [Parameter(Mandatory=$true)]$ComputerName
+    )
+
+    Invoke-Command -ComputerName $ComputerName -ScriptBlock {
+        $SQLTCPKeyPath = "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL10_50.MSSQLSERVER\MSSQLServer\SuperSocketNetLib\Tcp"
+        $SQLTCPKey = Get-ItemProperty -Path $SQLTCPKeyPath
+        if (-not $SQLTCPKey.Enabled) {
+            Set-ItemProperty -Path $SQLTCPKeyPath -Name Enabled -Value 1
+            Restart-Service -Name MSSQLSERVER -Force
+        }
+    }
+}
+
+function Get-SQLRemoteAccessEnabled {
+    param (
+        [Parameter(Mandatory=$true)]$ComputerName
+    )
+
+    Invoke-Command -ComputerName $ComputerName -ScriptBlock {
+        $SQLTCPKeyPath = "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL10_50.MSSQLSERVER\MSSQLServer\SuperSocketNetLib\Tcp"
+        $SQLTCPKey = Get-ItemProperty -Path $SQLTCPKeyPath
+        $SQLTCPKey.Enabled
+    }
+}
+
+function Get-OfflineDBTransactionLogName {
+    param (
+        $Credential = (Get-PasswordstateCredential -PasswordID 56),
+        [Parameter(Mandatory=$true)]$ComputerName
+    )
+
+    $TransactionLogFileNameSQLQuery = @"
+SELECT name
+FROM sys.master_files
+WHERE name LIKE '%\_Log' ESCAPE '\';
+"@
+
+    Invoke-RMSSQL -SQLServerName $ComputerName -DataBaseName OfflineDB -Query $TransactionLogFileNameSQLQuery |
+        Select-Object -ExpandProperty Name
 }
