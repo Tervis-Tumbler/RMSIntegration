@@ -366,9 +366,22 @@ function Stop-SOPOSUSERProcess {
     $RegisterComputers = Get-RegisterComputers -Online
 
     foreach ($RegisterComputer in $RegisterComputers) {
+        $RegisterComputer
         (Get-WmiObject Win32_Process -ComputerName $RegisterComputer | ?{ $_.ProcessName -match "soposuser" }).Terminate()
     }
 
+}
+
+function Stop-SOPOSUSERProcessParallel {
+    $RegisterComputers = Get-RegisterComputers -Online
+
+    $Responses = Start-ParallelWork -ScriptBlock {
+        param($Parameter) 
+        $Credential = Get-PasswordstateCredential -PasswordID 417
+        Invoke-Command -ComputerName $Parameter -Credential $Credential -ScriptBlock {
+            Get-Process -Name SOPOSUSER | Stop-Process -Force
+        }
+    } -Parameters $RegisterComputers
 }
 
 function Get-PersonalizeItConfigFileInfo {
@@ -389,12 +402,47 @@ function Get-PersonalizeItDllFileInfo {
 
 }
 
+function Get-PersonalizeItDllFileInfoParallel {
+    # Does not return expected object
+    $RegisterComputers = Get-RegisterComputers -Online
+
+    $Responses = Start-ParallelWork -ScriptBlock {
+        param($Parameter) 
+        Invoke-Command -ComputerName $Parameter { Get-ChildItem "C:\Program Files\nChannel\Personalize\Personalize.dll" } -ErrorAction SilentlyContinue | Select-Object pscomputername,name,lastwritetime
+    } -Parameters $RegisterComputers
+
+    $Responses
+}
+
 function Invoke-TervisRegisterComputerGPUpdate {
     $RegisterComputers = Get-RegisterComputers -Online
 
     foreach ($RegisterComputer in $RegisterComputers) {
         Invoke-GPUpdate -Computer $RegisterComputer -RandomDelayInMinutes 0 -Force
     }
+}
+
+function Invoke-TervisRegisterComputerGPUpdateParallel {
+    $RegisterComputers = Get-RegisterComputers -Online
+
+    $Responses = Start-ParallelWork -ScriptBlock {
+        param($Parameter) 
+        $Parameter
+        Invoke-GPUpdate -Computer $Parameter -RandomDelayInMinutes 0 -Force
+    } -Parameters $RegisterComputers
+
+    $Responses
+}
+
+function Invoke-TervisRegisterComputerRestart {
+    $RegisterComputers = Get-RegisterComputers -Online
+
+    $Responses = Start-ParallelWork -ScriptBlock {
+        param($Parameter) 
+        Restart-Computer -ComputerName $Parameter -Force -Verbose 
+    } -Parameters $RegisterComputers
+
+    $Responses
 }
 
 function Invoke-ConvertOfflineDBToSimpleRecoverModel {
