@@ -448,33 +448,50 @@ function Invoke-TervisRegisterComputerRestart {
 function Invoke-ConvertOfflineDBToSimpleRecoverModel {
     [CmdletBinding()]
     param (
-        
+        #$RegisterComputer
     )
 
     Write-Verbose -Message "Getting online registers"
     $OnlineRegisters = Get-RegisterComputers
-
-    <#
-    Start-ParallelWork -ScriptBlock {
-        param ($Parameter)
-        [PSCustomObject][Ordered]@{
-            ComputerName = $Parameter
-            RemoteSQLEnabled = (Get-SQLRemoteAccessEnabled -ComputerName $Parameter)
+    
+    Start-ParallelWork -Parameters $OnlineRegisters -ScriptBlock {
+        param(
+            $Parameter
+        )
+        $RegisterComputer = $Parameter
+        if (!(Get-SQLRemoteAccessEnabled -ComputerName $RegisterComputer)) {
+            Enable-SQLRemoteAccess -ComputerName $RegisterComputer
+        }    
+        $FreeSpaceBefore = Invoke-Command -ComputerName $RegisterComputer -ScriptBlock {
+            Get-PSDrive -Name C | Select-Object -ExpandProperty Free
         }
-    } -Parameters $OnlineRegisters
-
-    Get-OfflineDBTransactionLogName
-    # Get free space before
-    # Run SQL command to fix issue
-    # Get free space after
-    #>
+        $OfflineDBTransactionLog = Get-OfflineDBTransactionLogName -ComputerName $RegisterComputer
+        $SQLResponse = Invoke-RMSSQL -DataBaseName OfflineDB -SQLServerName $RegisterComputer -Query @"
+USE [master]
+ALTER DATABASE [OfflineDB] SET RECOVERY SIMPLE WITH NO_WAIT
+BACKUP DATABASE [OfflineDB] TO DISK = N'NUL' WITH NOFORMAT, NOINIT, NAME = N'OfflineDB-Full Database Backup', SKIP, NOREWIND, NOUNLOAD, STATS = 10
+USE [OfflineDB]
+DBCC SHRINKFILE (N'$OfflineDBTransactionLog' , 0, TRUNCATEONLY)
+"@
+        $FreeSpaceAfter = Invoke-Command -ComputerName $RegisterComputer -ScriptBlock {
+            Get-PSDrive -Name C | Select-Object -ExpandProperty Free
+        } 
+        $SpaceReclaimed = $FreeSpaceAfter - $FreeSpaceBefore
+        [pscustomobject][ordered]@{
+            Name = $RegisterComputer
+            TransactionLogName = $OfflineDBTransactionLog
+            DatabaseSize = $SQLResponse.CurrentSize
+            GigabytesReclaimed = [math]::Round(($SpaceReclaimed/1GB),2)
+        }
+    }
 }
 
 function Enable-SQLRemoteAccess {
+    [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true)]$ComputerName
     )
-
+    Write-Verbose "Enabling SQL remote access"
     Invoke-Command -ComputerName $ComputerName -ScriptBlock {
         $SQLTCPKeyPath = "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL10_50.MSSQLSERVER\MSSQLServer\SuperSocketNetLib\Tcp"
         $SQLTCPKey = Get-ItemProperty -Path $SQLTCPKeyPath
@@ -486,10 +503,11 @@ function Enable-SQLRemoteAccess {
 }
 
 function Get-SQLRemoteAccessEnabled {
+    [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true)]$ComputerName
     )
-
+    Write-Verbose "Getting current SQL remote access policy"
     Invoke-Command -ComputerName $ComputerName -ScriptBlock {
         $SQLTCPKeyPath = "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL10_50.MSSQLSERVER\MSSQLServer\SuperSocketNetLib\Tcp"
         $SQLTCPKey = Get-ItemProperty -Path $SQLTCPKeyPath
@@ -498,11 +516,13 @@ function Get-SQLRemoteAccessEnabled {
 }
 
 function Get-OfflineDBTransactionLogName {
+    [CmdletBinding()]
     param (
         $Credential = (Get-PasswordstateCredential -PasswordID 56),
         [Parameter(Mandatory=$true)]$ComputerName
     )
 
+    Write-Verbose "Getting OfflineDB transaction log name"
     $TransactionLogFileNameSQLQuery = @"
 SELECT name
 FROM sys.master_files
