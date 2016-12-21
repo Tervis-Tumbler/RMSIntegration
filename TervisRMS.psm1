@@ -535,14 +535,18 @@ WHERE name LIKE '%\_Log' ESCAPE '\';
 
 function Get-OfflineDBRecoveryModel {
     param (
-        [Parameter(Mandatory=$true)]$ComputerName
+        #[Parameter(Mandatory=$true)]$ComputerName
     )
-    
-    $SQLResponse = Invoke-RMSSQL -DataBaseName offlinedb -SQLServerName $ComputerName -Query @"
+    $Registers = Get-RegisterComputers
+
+    Start-ParallelWork -Parameters $Registers -ScriptBlock {
+        param($parameter)
+        $SQLResponse = Invoke-RMSSQL -DataBaseName offlinedb -SQLServerName $parameter -Query @"
 SELECT name, recovery_model_desc  
    FROM sys.databases  
       WHERE name = 'OfflineDB'
 "@ 
-    Add-Member -InputObject $SQLResponse -MemberType NoteProperty -Name ComputerName -Value $ComputerName
-    $SQLResponse
+        Add-Member -InputObject $SQLResponse -MemberType NoteProperty -Name ComputerName -Value $parameter
+        $SQLResponse | select ComputerName,name,recovery_model_desc
+    }
 }
