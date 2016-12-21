@@ -532,3 +532,17 @@ WHERE name LIKE '%\_Log' ESCAPE '\';
     Invoke-RMSSQL -SQLServerName $ComputerName -DataBaseName OfflineDB -Query $TransactionLogFileNameSQLQuery |
         Select-Object -ExpandProperty Name
 }
+
+function Get-OfflineDBRecoveryModel {
+    param (
+        [Parameter(Mandatory=$true)]$ComputerName
+    )
+    
+    $SQLResponse = Invoke-RMSSQL -DataBaseName offlinedb -SQLServerName $ComputerName -Query @"
+SELECT name, recovery_model_desc  
+   FROM sys.databases  
+      WHERE name = 'OfflineDB'
+"@ 
+    Add-Member -InputObject $SQLResponse -MemberType NoteProperty -Name ComputerName -Value $ComputerName
+    $SQLResponse
+}
