@@ -547,6 +547,26 @@ SELECT name, recovery_model_desc
       WHERE name = 'OfflineDB'
 "@ 
         Add-Member -InputObject $SQLResponse -MemberType NoteProperty -Name ComputerName -Value $parameter
-        $SQLResponse | select ComputerName,name,recovery_model_desc
-    }
+        $SQLResponse
+    } | select ComputerName,name,recovery_model_desc
+}
+
+function Get-TervisRMSShift4UTGVersion {
+    [cmdletbinding()]
+    param()
+
+    Write-Verbose "Getting register computers"
+    $Registers = Get-RegisterComputers
+    Write-Verbose "Getting version numbers for Shift4 UTG"
+    Start-ParallelWork -Parameters $Registers -ScriptBlock {
+        param($parameter)
+        $UTGProductInformation = Invoke-Command -ComputerName $parameter -ScriptBlock {
+             #Get-WmiObject -Class Win32_Product -Filter {Name = "Shift4 Universal Transaction Gateway"}
+             Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\* | 
+                where {$_.DisplayName -match "Shift4 Universal Transaction Gateway"} |
+                select -Property DisplayName,DisplayVersion,InstallDate
+        }
+        Add-Member -InputObject $UTGProductInformation -MemberType NoteProperty -Name ComputerName -Value $parameter
+        $UTGProductInformation 
+    } | select ComputerName,DisplayName,DisplayVersion,InstallDate
 }
