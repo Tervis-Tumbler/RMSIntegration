@@ -589,4 +589,39 @@ function Enable-SQLRemoteAccessForAllRegisterComputers {
         }    
     }
 }
+
+function Copy-PersonalizeDLLToAllEpsilonRegisters {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true)]$PathToPersonalizeDLL
+    )
+
+    if (!(Test-Path $PathToPersonalizeDLL)) {
+        throw "Personalize.dll not found on local system"
+    }
+
+    $EPSRMSComputers = Get-ADComputer -Filter {Name -like "EPS-RMSPOS*"}
+    $CurrentDate = Get-Date -Format yyyyMMdd.HHmmss
+
+    foreach ($POS in $EPSRMSComputers) {
+        Write-Verbose "$($POS.Name)"
+        
+        $RemotePersonalizeDLL = "\\$($POS.Name)\c$\Program Files\nChannel\Personalize\Personalize.dll"
+
+        if (Test-Connection -ComputerName $POS.Name -Count 1 -Quiet) {
+            $HashesMatch = try {
+                (Get-FileHash $RemotePersonalizeDLL -ErrorAction Stop).Hash -eq (Get-FileHash -Path $PathToPersonalizeDLL).Hash
+            } catch {$false}
+                               
+            if (!$HashesMatch) {
+                Write-Verbose "Copying Personalize.dll to $($POS.Name)"
+                Rename-Item -Path $RemotePersonalizeDLL -NewName "Personalize.$CurrentDate.dll"            
+                Copy-Item -Path $PathToPersonalizeDLL -Destination $RemotePersonalizeDLL -Force
+            } else {
+                Write-Warning "Files are identical. Files were not copied."
+            }
+        } else {
+            Write-Warning "Could not connect"
+        }
+    }
 }
