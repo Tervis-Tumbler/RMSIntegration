@@ -408,7 +408,7 @@ function Get-PersonalizeItDllFileInfoParallel {
 
     $Responses = Start-ParallelWork -ScriptBlock {
         param($Parameter) 
-        Invoke-Command -ComputerName $Parameter { Get-ChildItem "C:\Program Files\nChannel\Personalize\Personalize.dll" } -ErrorAction SilentlyContinue | Select-Object pscomputername,name,lastwritetime
+        $Response = Invoke-Command -ComputerName $Parameter { Get-ChildItem "C:\Program Files\nChannel\Personalize\Personalize.dll" } -ErrorAction SilentlyContinue | Select-Object pscomputername,name,lastwritetime
     } -Parameters $RegisterComputers
 
     $Responses
@@ -561,12 +561,15 @@ function Get-TervisRMSShift4UTGVersion {
     Start-ParallelWork -Parameters $Registers -ScriptBlock {
         param($parameter)
         $UTGProductInformation = Invoke-Command -ComputerName $parameter -ScriptBlock {
-             #Get-WmiObject -Class Win32_Product -Filter {Name = "Shift4 Universal Transaction Gateway"}
              Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\* | 
                 where {$_.DisplayName -match "Shift4 Universal Transaction Gateway"} |
                 select -Property DisplayName,DisplayVersion,InstallDate
         }
-        Add-Member -InputObject $UTGProductInformation -MemberType NoteProperty -Name ComputerName -Value $parameter
+        if (!$UTGProductInformation) {
+            Write-Warning "Could not get UTG install information from $parameter"
+        } else {
+            Add-Member -InputObject $UTGProductInformation -MemberType NoteProperty -Name ComputerName -Value $parameter
+        }
         $UTGProductInformation 
     } | select ComputerName,DisplayName,DisplayVersion,InstallDate
 }
