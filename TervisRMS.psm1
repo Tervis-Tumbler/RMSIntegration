@@ -573,3 +573,20 @@ function Get-TervisRMSShift4UTGVersion {
         $UTGProductInformation 
     } | select ComputerName,DisplayName,DisplayVersion,InstallDate
 }
+
+function Enable-SQLRemoteAccessForAllRegisterComputers {    
+    Write-Verbose -Message "Getting online registers"
+    $OnlineRegisters = Get-RegisterComputers
+
+    Start-ParallelWork -Parameters $OnlineRegisters -ScriptBlock {
+        param(
+            $Parameter
+        )
+        $RegisterComputer = $Parameter
+        if (!(Get-SQLRemoteAccessEnabled -ComputerName $RegisterComputer)) {
+            Enable-SQLRemoteAccess -ComputerName $RegisterComputer
+            $RegisterComputer
+        }    
+    }
+}
+}
