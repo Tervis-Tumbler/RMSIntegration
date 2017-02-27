@@ -1,5 +1,33 @@
 ﻿#Requires -modules TervisPowerShellJobs,InvokeSQL,PasswordstatePowershell
 
+function Get-HeadquartersServers {
+    param(
+        [Switch]$Online = $True
+    )
+
+    $RMSHQServersOU = Get-ADOrganizationalUnit -Filter { Name -eq "RMSHQ Servers" } 
+    $HeadquartersServersNames = Get-ADComputer -SearchBase $RMSHQServersOU -Filter { Name -like "*RMSHQ*" } |
+    Select -ExpandProperty name
+
+    $ClusterResources = Get-ClusterGroup -Cluster hypervcluster5 | 
+    where grouptype -eq "VirtualMachine" |
+    where Name -In $HeadquartersServersNames
+
+    Get-VM -ClusterObject $ClusterResources
+
+    $Responses = Start-ParallelWork -ScriptBlock {
+        param($Parameter)
+        [pscustomobject][ordered]@{
+            BackOfficeComputerName = $Parameter;
+            Online = $(Test-Connection -ComputerName $Parameter -Count 1 -Quiet);        
+        }
+    } -Parameters $BackOfficeComputerNames
+
+    $Responses | 
+    where Online -EQ $true |
+    Select -ExpandProperty BackOfficeComputerName
+}
+
 function Get-BackOfficeComputers {
     param(
         [Switch]$Online = $True
