@@ -411,10 +411,17 @@ function Get-PersonalizeItDllFileInfoParallel {
 
     $Responses = Start-ParallelWork -ScriptBlock {
         param($Parameter) 
-        $Response = Invoke-Command -ComputerName $Parameter { Get-ChildItem "C:\Program Files\nChannel\Personalize\Personalize.dll" } -ErrorAction SilentlyContinue 
-    } -Parameters $RegisterComputers | Select-Object pscomputername,name,lastwritetime
+        
+        $PersonalizeDLLFileInfo = Invoke-Command -ComputerName $Parameter { 
+            $FileInfo = Get-ChildItem "C:\Program Files\nChannel\Personalize\Personalize.dll"
+            Add-Member -InputObject $FileInfo -MemberType NoteProperty -Name "Version" -Value $FileInfo.VersionInfo.FileVersion
+            $FileInfo
+        } -ErrorAction SilentlyContinue
+        Add-Member -InputObject $PersonalizeDLLFileInfo -MemberType NoteProperty -Name "ComputerName" -Value $Parameter
+        $PersonalizeDLLFileInfo
+    } -Parameters $RegisterComputers
 
-    $Responses
+    $Responses | Select-Object ComputerName,Name,Version,LastWriteTime
 }
 
 function Invoke-TervisRegisterComputerGPUpdate {
