@@ -373,7 +373,9 @@ function Stop-SOPOSUSERProcess {
 }
 
 function Stop-SOPOSUSERProcessParallel {
-    $RegisterComputers = Get-RegisterComputers -Online
+    param (
+        $RegisterComputers = (Get-RegisterComputers -Online)
+    )
 
     $Responses = Start-ParallelWork -ScriptBlock {
         param($Parameter) 
@@ -403,13 +405,14 @@ function Get-PersonalizeItDllFileInfo {
 }
 
 function Get-PersonalizeItDllFileInfoParallel {
-    # Does not return expected object
-    $RegisterComputers = Get-RegisterComputers -Online
+    param (
+        $RegisterComputers = (Get-RegisterComputers -Online)
+    )
 
     $Responses = Start-ParallelWork -ScriptBlock {
         param($Parameter) 
-        $Response = Invoke-Command -ComputerName $Parameter { Get-ChildItem "C:\Program Files\nChannel\Personalize\Personalize.dll" } -ErrorAction SilentlyContinue | Select-Object pscomputername,name,lastwritetime
-    } -Parameters $RegisterComputers
+        $Response = Invoke-Command -ComputerName $Parameter { Get-ChildItem "C:\Program Files\nChannel\Personalize\Personalize.dll" } -ErrorAction SilentlyContinue 
+    } -Parameters $RegisterComputers | Select-Object pscomputername,name,lastwritetime
 
     $Responses
 }
@@ -423,7 +426,9 @@ function Invoke-TervisRegisterComputerGPUpdate {
 }
 
 function Invoke-TervisRegisterComputerGPUpdateParallel {
-    $RegisterComputers = Get-RegisterComputers -Online
+    param (
+        $RegisterComputers = (Get-RegisterComputers -Online)
+    )
 
     $Responses = Start-ParallelWork -ScriptBlock {
         param($Parameter) 
@@ -435,7 +440,9 @@ function Invoke-TervisRegisterComputerGPUpdateParallel {
 }
 
 function Invoke-TervisRegisterComputerRestart {
-    $RegisterComputers = Get-RegisterComputers -Online
+    param (
+        $RegisterComputers = (Get-RegisterComputers -Online)
+    ) 
 
     $Responses = Start-ParallelWork -ScriptBlock {
         param($Parameter) 
