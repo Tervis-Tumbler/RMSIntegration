@@ -632,10 +632,10 @@ function Enable-SQLRemoteAccessForAllRegisterComputers {
     }
 }
 
-function Copy-PersonalizeDLLToAllEpsilonRegisters {
+function Invoke-DeployPersonalizeDLLToAllEpsilonRegisters {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true)]$PathToPersonalizeDLL
+        [Parameter(Mandatory=$true)]$PathToPersonalizeDLLtoDeploy
     )
 
     if (!(Test-Path $PathToPersonalizeDLL)) {
@@ -664,6 +664,16 @@ function Copy-PersonalizeDLLToAllEpsilonRegisters {
             }
         } else {
             Write-Warning "Could not connect"
+        }
+    }
+
+    Write-Verbose "Restarting Epsilon registers"
+    Start-ParallelWork -Parameters $EPSRMSComputers -ScriptBlock {
+        param ($Parameter)
+        try {
+            Restart-Computer -ComputerName $Parameter.Name -Force -Wait -ErrorAction Stop
+        } catch {
+            Write-Warning "Could not restart $($Parameter.Name)"
         }
     }
 }
