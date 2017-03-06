@@ -468,7 +468,7 @@ function Invoke-TervisRegisterComputerGPUpdateParallel {
     $Responses = Start-ParallelWork -ScriptBlock {
         param($Parameter) 
         $Parameter
-        Invoke-GPUpdate -Computer $Parameter -RandomDelayInMinutes 0 -Force
+        Invoke-GPUpdate -Computer $Parameter -RandomDelayInMinutes 0
     } -Parameters $RegisterComputers
 
     $Responses
