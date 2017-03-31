@@ -677,3 +677,49 @@ function Invoke-DeployPersonalizeDLLToAllEpsilonRegisters {
         }
     }
 }
+
+function Invoke-DeployPersonalizeItConfigXMLToAllEpsilonRegisters {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true)]$PathToPersonalizeItConfigXMLtoDeploy
+    )
+
+    if (!(Test-Path $PathToPersonalizeItConfigXMLtoDeploy)) {
+        throw "PersonalizeItConfig.xml not found on local system"
+    }
+
+    $EPSRMSComputers = Get-ADComputer -Filter {Name -like "EPS-RMSPOS*"}
+    $CurrentDate = Get-Date -Format yyyyMMdd.HHmmss
+
+    foreach ($POS in $EPSRMSComputers) {
+        Write-Verbose "$($POS.Name)"
+        
+        $RemotePersonalizeItConfigXML = "\\$($POS.Name)\c$\Program Files\nChannel\Personalize\PersonalizeItConfig.xml"
+
+        if (Test-Connection -ComputerName $POS.Name -Count 1 -Quiet) {
+            $HashesMatch = try {
+                (Get-FileHash $RemotePersonalizeItConfigXML -ErrorAction Stop).Hash -eq (Get-FileHash -Path $PathToPersonalizeItConfigXMLtoDeploy).Hash
+            } catch {$false}
+                               
+            if (!$HashesMatch) {
+                Write-Verbose "Copying PersonalizeItConfig.xml to $($POS.Name)"
+                Rename-Item -Path $RemotePersonalizeItConfigXML -NewName "Personalize.$CurrentDate.dll"            
+                Copy-Item -Path $PathToPersonalizeItConfigXMLtoDeploy -Destination $RemotePersonalizeItConfigXML -Force
+            } else {
+                Write-Warning "Files are identical. Files were not copied."
+            }
+        } else {
+            Write-Warning "Could not connect"
+        }
+    }
+
+    Write-Verbose "Restarting Epsilon registers"
+    Start-ParallelWork -Parameters $EPSRMSComputers -ScriptBlock {
+        param ($Parameter)
+        try {
+            Restart-Computer -ComputerName $Parameter.Name -Force -Wait -ErrorAction Stop
+        } catch {
+            Write-Warning "Could not restart $($Parameter.Name)"
+        }
+    }
+}
