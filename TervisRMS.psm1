@@ -671,7 +671,7 @@ function Invoke-DeployPersonalizeDLLToAllEpsilonRegisters {
     Start-ParallelWork -Parameters $EPSRMSComputers -ScriptBlock {
         param ($Parameter)
         try {
-            Restart-Computer -ComputerName $Parameter.Name -Force -Wait -ErrorAction Stop
+            Restart-Computer -ComputerName $Parameter.Name -Force -ErrorAction Stop
         } catch {
             Write-Warning "Could not restart $($Parameter.Name)"
         }
@@ -717,7 +717,7 @@ function Invoke-DeployPersonalizeItConfigXMLToAllEpsilonRegisters {
     Start-ParallelWork -Parameters $EPSRMSComputers -ScriptBlock {
         param ($Parameter)
         try {
-            Restart-Computer -ComputerName $Parameter.Name -Force -Wait -ErrorAction Stop
+            Restart-Computer -ComputerName $Parameter.Name -Force -ErrorAction Stop
         } catch {
             Write-Warning "Could not restart $($Parameter.Name)"
         }
