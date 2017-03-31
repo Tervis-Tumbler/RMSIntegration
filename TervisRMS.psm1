@@ -638,7 +638,7 @@ function Invoke-DeployPersonalizeDLLToAllEpsilonRegisters {
         [Parameter(Mandatory=$true)]$PathToPersonalizeDLLtoDeploy
     )
 
-    if (!(Test-Path $PathToPersonalizeDLL)) {
+    if (!(Test-Path $PathToPersonalizeDLLtoDeploy)) {
         throw "Personalize.dll not found on local system"
     }
 
@@ -652,13 +652,13 @@ function Invoke-DeployPersonalizeDLLToAllEpsilonRegisters {
 
         if (Test-Connection -ComputerName $POS.Name -Count 1 -Quiet) {
             $HashesMatch = try {
-                (Get-FileHash $RemotePersonalizeDLL -ErrorAction Stop).Hash -eq (Get-FileHash -Path $PathToPersonalizeDLL).Hash
+                (Get-FileHash $RemotePersonalizeDLL -ErrorAction Stop).Hash -eq (Get-FileHash -Path $PathToPersonalizeDLLtoDeploy).Hash
             } catch {$false}
                                
             if (!$HashesMatch) {
                 Write-Verbose "Copying Personalize.dll to $($POS.Name)"
                 Rename-Item -Path $RemotePersonalizeDLL -NewName "Personalize.$CurrentDate.dll"            
-                Copy-Item -Path $PathToPersonalizeDLL -Destination $RemotePersonalizeDLL -Force
+                Copy-Item -Path $PathToPersonalizeDLLtoDeploy -Destination $RemotePersonalizeDLL -Force
             } else {
                 Write-Warning "Files are identical. Files were not copied."
             }
