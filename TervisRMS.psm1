@@ -1,4 +1,4 @@
-﻿#Requires -modules TervisPowerShellJobs,InvokeSQL,PasswordstatePowershell
+﻿#Requires -modules TervisPowerShellJobs,InvokeSQL,PasswordstatePowershell,TervisSQLPS
 
 function Get-HeadquartersServers {
     param(
@@ -524,22 +524,6 @@ DBCC SHRINKFILE (N'$OfflineDBTransactionLog' , 0, TRUNCATEONLY)
             TransactionLogName = $OfflineDBTransactionLog
             DatabaseSize = $SQLResponse.CurrentSize
             GigabytesReclaimed = [math]::Round(($SpaceReclaimed/1GB),2)
-        }
-    }
-}
-
-function Enable-SQLRemoteAccess {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory=$true)]$ComputerName
-    )
-    Write-Verbose "Enabling SQL remote access"
-    Invoke-Command -ComputerName $ComputerName -ScriptBlock {
-        $SQLTCPKeyPath = "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL10_50.MSSQLSERVER\MSSQLServer\SuperSocketNetLib\Tcp"
-        $SQLTCPKey = Get-ItemProperty -Path $SQLTCPKeyPath
-        if (-not $SQLTCPKey.Enabled) {
-            Set-ItemProperty -Path $SQLTCPKeyPath -Name Enabled -Value 1
-            Restart-Service -Name MSSQLSERVER -Force
         }
     }
 }
