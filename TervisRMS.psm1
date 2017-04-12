@@ -80,9 +80,8 @@ function Get-OmittedRegisterComputers {
         $OnlineRegisterComputers = (Get-RegisterComputers -Online)
     )
     $AllRegisterComputers = Get-ADComputer -Filter * -SearchBase "OU=Register Computers,OU=Remote Store Computers,OU=Computers,OU=Stores,OU=Departments,DC=tervis,DC=prv" |
-        Select -ExpandProperty Name
-    $AllRegisterComputers | 
-        where -NotMatch $OnlineRegisterComputers
+        select -ExpandProperty Name
+    compare $AllRegisterComputers $OnlineRegisterComputers -PassThru
 }
 
 function Get-BackOfficeComputersWhereConditionTrue {
