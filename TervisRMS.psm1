@@ -75,6 +75,15 @@ function Get-RegisterComputers {
     }
 }
 
+    param (
+        $OnlineRegisterComputers = Get-RegisterComputers -Online
+    )
+    $AllRegisterComputers = Get-ADComputer -Filter * -SearchBase "OU=Register Computers,OU=Remote Store Computers,OU=Computers,OU=Stores,OU=Departments,DC=tervis,DC=prv" |
+        Select -ExpandProperty Name
+    $AllRegisterComputers | 
+        where -NotMatch $OnlineRegisterComputers
+}
+
 function Get-BackOfficeComputersWhereConditionTrue {
     param(
         $BackOfficeComputerNames,
