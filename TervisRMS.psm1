@@ -75,6 +75,7 @@ function Get-RegisterComputers {
     }
 }
 
+function Get-OmittedRegisterComputers {
     param (
         $OnlineRegisterComputers = Get-RegisterComputers -Online
     )
