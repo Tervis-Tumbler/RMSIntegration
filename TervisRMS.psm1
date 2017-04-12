@@ -452,6 +452,24 @@ function Get-PersonalizeItDllFileInfoParallel {
     $Responses | Select-Object ComputerName,Name,Version,LastWriteTime
 }
 
+function Get-PersonalizeItConfigFileInfoParallel {
+    param (
+        $RegisterComputers = (Get-RegisterComputers -Online)
+    )
+
+    $Responses = Start-ParallelWork -ScriptBlock {
+        param($Parameter) 
+        
+        $PersonalizeItConfigFileInfo = Invoke-Command -ComputerName $Parameter { 
+            Get-ChildItem "C:\Program Files\nChannel\Personalize\PersonalizeItConfig.xml"
+        } -ErrorAction SilentlyContinue
+        Add-Member -InputObject $PersonalizeItConfigFileInfo -MemberType NoteProperty -Name "ComputerName" -Value $Parameter
+        $PersonalizeItConfigFileInfo
+    } -Parameters $RegisterComputers
+
+    $Responses | Select-Object ComputerName,Name,LastWriteTime
+}
+
 function Invoke-TervisRegisterComputerGPUpdate {
     $RegisterComputers = Get-RegisterComputers -Online
 
