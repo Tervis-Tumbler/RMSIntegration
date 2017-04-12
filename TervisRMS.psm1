@@ -51,7 +51,7 @@ function Get-BackOfficeComputers {
 
 function Get-RegisterComputers {
     param(
-        [Switch]$Online = $True
+        [Switch]$Online
     )
 
     $RegisterComputerNames = Get-ADComputer -Filter * -SearchBase "OU=Register Computers,OU=Remote Store Computers,OU=Computers,OU=Stores,OU=Departments,DC=tervis,DC=prv" |
@@ -65,11 +65,15 @@ function Get-RegisterComputers {
         }
     } -Parameters $RegisterComputerNames
 
-    $Responses | 
-    where Online -EQ $true |
-    Select -ExpandProperty RegisterComputerName
+    if ($Online) {
+        $Responses | 
+        where Online -EQ $true |
+        Select -ExpandProperty RegisterComputerName
+    } else {
+        $Responses |         
+        Select -ExpandProperty RegisterComputerName
+    }
 }
-
 
 function Get-BackOfficeComputersWhereConditionTrue {
     param(
@@ -512,7 +516,7 @@ function Invoke-ConvertOfflineDBToSimpleRecoverModel {
     )
 
     Write-Verbose -Message "Getting online registers"
-    $OnlineRegisters = Get-RegisterComputers
+    $OnlineRegisters = Get-RegisterComputers -Online
     
     Start-ParallelWork -Parameters $OnlineRegisters -ScriptBlock {
         param(
@@ -581,7 +585,7 @@ function Get-OfflineDBRecoveryModel {
     param (
         #[Parameter(Mandatory=$true)]$ComputerName
     )
-    $Registers = Get-RegisterComputers
+    $Registers = Get-RegisterComputers -Online
 
     Start-ParallelWork -Parameters $Registers -ScriptBlock {
         param($parameter)
@@ -600,7 +604,7 @@ function Get-TervisRMSShift4UTGVersion {
     param()
 
     Write-Verbose "Getting register computers"
-    $Registers = Get-RegisterComputers
+    $Registers = Get-RegisterComputers -Online
     Write-Verbose "Getting version numbers for Shift4 UTG"
     Start-ParallelWork -Parameters $Registers -ScriptBlock {
         param($parameter)
@@ -620,7 +624,7 @@ function Get-TervisRMSShift4UTGVersion {
 
 function Enable-SQLRemoteAccessForAllRegisterComputers {    
     Write-Verbose -Message "Getting online registers"
-    $OnlineRegisters = Get-RegisterComputers
+    $OnlineRegisters = Get-RegisterComputers -Online
 
     Start-ParallelWork -Parameters $OnlineRegisters -ScriptBlock {
         param(
