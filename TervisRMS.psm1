@@ -738,3 +738,49 @@ function Invoke-DeployPersonalizeItConfigXMLToAllEpsilonRegisters {
         }
     }
 }
+
+function Set-RMSClientNetworkConfiguration {
+    param (
+        [Parameter(ValueFromPipelineByPropertyName)]$ComputerName,
+        [ValidateSet("BackOffice","POS1","POS2")][string]$RMSClientRole,
+        [ValidateRange(0,255)][int]$StoreNetworkIdentifier
+    )
+    Begin {
+        $ADDomain = Get-ADDomain
+        $ADDNSRoot = $ADDomain | Select -ExpandProperty DNSRoot
+    }
+    Process {
+        if ($RMSClientRole -eq "BackOffice") {
+            $StaticIPAddress = '10.64.' + $StoreNetworkIdentifier + '.5'
+        } elseif ($RMSClientRole -eq "POS1") {
+            $StaticIPAddress = '10.64.' + $StoreNetworkIdentifier + '.10'
+        } elseif ($RMSClientRole -eq "POS2") {
+            $StaticIPAddress = '10.64.' + $StoreNetworkIdentifier + '.11'
+        }
+        $DefaultGateway = '10.64.' + $StoreNetworkIdentifier + '.1'
+        $CimSession = New-CimSession -ComputerName $ComputerName
+        $CurrentNicConfiguration = Get-NetIPConfiguration `
+            -InterfaceAlias $(Get-NetAdapter -CimSession $CimSession).Name `
+            -CimSession $CimSession
+        $InterfaceName = $CurrentNicConfiguration | Select -ExpandProperty InterfaceAlias
+        $DNSServerIPAddresses = @()
+        $DNSServerIPAddresses += Get-DnsClientServerAddress `
+            -InterfaceAlias ($CurrentNicConfiguration).InterfaceAlias `
+            -AddressFamily IPv4 `
+            -CimSession $CimSession | `
+            Select -ExpandProperty ServerAddresses
+        $DNSServerIPAddresses += '208.67.222.222','208.67.220.220','8.8.8.8'
+        Set-DnsClientServerAddress `
+            -InterfaceAlias ($CurrentNicConfiguration).InterfaceAlias `
+            -ServerAddresses $DNSServerIPAddresses `
+            -CimSession $CimSession
+        $IPConfiguration = Get-WmiObject win32_networkadapterconfiguration -ComputerName $ComputerName | where Description -eq ($CurrentNicConfiguration).InterfaceDescription
+        $SubnetMask = ($IPConfiguration).IPSubnet[0]
+        $IPConfiguration.SetDNSDomain($ADDNSRoot)
+        $IPConfiguration.SetDynamicDNSRegistration($true)
+        Invoke-Command -ComputerName $ComputerName -AsJob -ScriptBlock {netsh interface ip set address $Using:InterfaceName static $Using:StaticIPAddress $Using:SubnetMask $Using:DefaultGateway 1}
+    }
+    End {
+        Remove-CimSession $CimSession
+    }
+}
