@@ -764,11 +764,10 @@ function Set-RMSClientNetworkConfiguration {
             -CimSession $CimSession
         $InterfaceName = $CurrentNicConfiguration | Select -ExpandProperty InterfaceAlias
         $DNSServerIPAddresses = @()
-        $DNSServerIPAddresses += Get-DnsClientServerAddress `
-            -InterfaceAlias ($CurrentNicConfiguration).InterfaceAlias `
-            -AddressFamily IPv4 `
-            -CimSession $CimSession | `
-            Select -ExpandProperty ServerAddresses
+        $DNSServerIPAddresses += Get-DhcpServerv4OptionValue -ComputerName $(Get-DhcpServerInDC | `
+            Select -First 1 -ExpandProperty DNSName) | `
+            Where OptionID -eq 6 | `
+            Select -ExpandProperty Value
         $DNSServerIPAddresses += '208.67.222.222','208.67.220.220','8.8.8.8'
         Set-DnsClientServerAddress `
             -InterfaceAlias ($CurrentNicConfiguration).InterfaceAlias `
