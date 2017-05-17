@@ -753,9 +753,9 @@ function Set-RMSClientNetworkConfiguration {
         if ($RMSClientRole -eq "BackOffice") {
             $StaticIPAddress = '10.64.' + $StoreNetworkIdentifier + '.5'
         } elseif ($RMSClientRole -eq "POS1") {
-            $StaticIPAddress = '10.64.' + $StoreNetworkIdentifier + '.10'
-        } elseif ($RMSClientRole -eq "POS2") {
             $StaticIPAddress = '10.64.' + $StoreNetworkIdentifier + '.11'
+        } elseif ($RMSClientRole -eq "POS2") {
+            $StaticIPAddress = '10.64.' + $StoreNetworkIdentifier + '.12'
         }
         $DefaultGateway = '10.64.' + $StoreNetworkIdentifier + '.1'
         $CimSession = New-CimSession -ComputerName $ComputerName
