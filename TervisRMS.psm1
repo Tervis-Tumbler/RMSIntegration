@@ -739,56 +739,12 @@ function Invoke-DeployPersonalizeItConfigXMLToAllEpsilonRegisters {
     }
 }
 
-function Set-RMSWin10ClientNetworkConfiguration {
+function Set-RMSClientNetworkConfiguration {
     param (
         [Parameter(ValueFromPipelineByPropertyName)]$ComputerName,
         [ValidateSet("BackOffice","POS1","POS2")][string]$RMSClientRole,
-        [ValidateRange(0,255)][int]$StoreNetworkIdentifier
-    )
-    Begin {
-        $ADDomain = Get-ADDomain
-        $ADDNSRoot = $ADDomain | Select -ExpandProperty DNSRoot
-    }
-    Process {
-        if ($RMSClientRole -eq "BackOffice") {
-            $StaticIPAddress = '10.64.' + $StoreNetworkIdentifier + '.5'
-        } elseif ($RMSClientRole -eq "POS1") {
-            $StaticIPAddress = '10.64.' + $StoreNetworkIdentifier + '.11'
-        } elseif ($RMSClientRole -eq "POS2") {
-            $StaticIPAddress = '10.64.' + $StoreNetworkIdentifier + '.12'
-        }
-        $DefaultGateway = '10.64.' + $StoreNetworkIdentifier + '.1'
-        $CimSession = New-CimSession -ComputerName $ComputerName
-        $CurrentNicConfiguration = Get-NetIPConfiguration `
-            -InterfaceAlias $(Get-NetAdapter -CimSession $CimSession).Name `
-            -CimSession $CimSession
-        $InterfaceName = $CurrentNicConfiguration | Select -ExpandProperty InterfaceAlias
-        $DNSServerIPAddresses = @()
-        $DNSServerIPAddresses += Get-DhcpServerv4OptionValue -ComputerName $(Get-DhcpServerInDC | `
-            Select -First 1 -ExpandProperty DNSName) | `
-            Where OptionID -eq 6 | `
-            Select -ExpandProperty Value
-        $DNSServerIPAddresses += '208.67.220.220','8.8.4.4'
-        Set-DnsClientServerAddress `
-            -InterfaceAlias ($CurrentNicConfiguration).InterfaceAlias `
-            -ServerAddresses $DNSServerIPAddresses `
-            -CimSession $CimSession
-        $IPConfiguration = Get-WmiObject win32_networkadapterconfiguration -ComputerName $ComputerName | where Description -eq ($CurrentNicConfiguration).InterfaceDescription
-        $SubnetMask = ($IPConfiguration).IPSubnet[0]
-        $IPConfiguration.SetDNSDomain($ADDNSRoot)
-        $IPConfiguration.SetDynamicDNSRegistration($true)
-        Invoke-Command -ComputerName $ComputerName -AsJob -ScriptBlock {netsh interface ip set address $Using:InterfaceName static $Using:StaticIPAddress $Using:SubnetMask $Using:DefaultGateway 1}
-    }
-    End {
-        Remove-CimSession $CimSession
-    }
-}
-
-function Set-RMSWin7ClientNetworkConfiguration {
-    param (
-        [Parameter(ValueFromPipelineByPropertyName)]$ComputerName,
-        [ValidateSet("BackOffice","POS1","POS2")][string]$RMSClientRole,
-        [ValidateRange(0,255)][int]$StoreNetworkIdentifier
+        [ValidateRange(0,255)][int]$StoreNetworkIdentifier,
+        [Switch]$UseWMI
     )
     Begin {
         $ADDomain = Get-ADDomain
@@ -809,15 +765,34 @@ function Set-RMSWin7ClientNetworkConfiguration {
             Where OptionID -eq 6 | `
             Select -ExpandProperty Value
         $DNSServerIPAddresses += '208.67.220.220','8.8.4.4'
-        $IPConfiguration = Get-WmiObject win32_networkadapterconfiguration -ComputerName $ComputerName | where IPEnabled
-        $InterfaceIndex = $IPConfiguration | Select -ExpandProperty InterfaceIndex
-        $SubnetMask = ($IPConfiguration).IPSubnet[0]
-        $IPConfiguration.SetDNSDomain($ADDNSRoot)
-        $IPConfiguration.SetDynamicDNSRegistration($true)
-        $IPConfiguration.SetDNSServerSearchOrder($DNSServerIPAddresses)
-        Invoke-Command -ComputerName $ComputerName -AsJob -ScriptBlock {netsh interface ip set address $Using:InterfaceIndex static $Using:StaticIPAddress $Using:SubnetMask $Using:DefaultGateway 1}
+        if ($UseWMI) {
+            $IPConfiguration = Get-WmiObject win32_networkadapterconfiguration -ComputerName $ComputerName | where IPEnabled
+            $InterfaceIndex = $IPConfiguration | Select -ExpandProperty InterfaceIndex
+            $SubnetMask = ($IPConfiguration).IPSubnet[0]
+            $IPConfiguration.SetDNSDomain($ADDNSRoot)
+            $IPConfiguration.SetDynamicDNSRegistration($true)
+            $IPConfiguration.SetDNSServerSearchOrder($DNSServerIPAddresses)
+            Invoke-Command -ComputerName $ComputerName -AsJob -ScriptBlock {netsh interface ip set address $Using:InterfaceIndex static $Using:StaticIPAddress $Using:SubnetMask $Using:DefaultGateway 1}
+        } else {
+            $CimSession = New-CimSession -ComputerName $ComputerName
+            $CurrentNicConfiguration = Get-NetIPConfiguration `
+                -InterfaceAlias $(Get-NetAdapter -CimSession $CimSession).Name `
+                -CimSession $CimSession
+            $InterfaceName = $CurrentNicConfiguration | Select -ExpandProperty InterfaceAlias
+            Set-DnsClientServerAddress `
+                -InterfaceAlias ($CurrentNicConfiguration).InterfaceAlias `
+                -ServerAddresses $DNSServerIPAddresses `
+                -CimSession $CimSession
+            $IPConfiguration = Get-WmiObject win32_networkadapterconfiguration -ComputerName $ComputerName | where Description -eq ($CurrentNicConfiguration).InterfaceDescription
+            $SubnetMask = ($IPConfiguration).IPSubnet[0]
+            $IPConfiguration.SetDNSDomain($ADDNSRoot)
+            $IPConfiguration.SetDynamicDNSRegistration($true)
+            Invoke-Command -ComputerName $ComputerName -AsJob -ScriptBlock {netsh interface ip set address $Using:InterfaceName static $Using:StaticIPAddress $Using:SubnetMask $Using:DefaultGateway 1}
+        }
     }
     End {
-        Remove-CimSession $CimSession
+        if (-NOT ($UseWMI)) {
+            Remove-CimSession $CimSession
+        }
     }
 }
