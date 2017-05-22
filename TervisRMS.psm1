@@ -831,3 +831,12 @@ function Invoke-PushFileToAllBackOfficeComputers {
     }
     Write-Progress -Activity "Pushing file to Back Office computers" -Completed
 }
+
+function Get-NetshCommandsToSetDNSOnStoreEndpoint {
+    @"
+netsh interface ip set dns name="Local Area Connection" static 10.172.44.235
+netsh interface ip add dns name="Local Area Connection" addr=10.172.44.237 index=2
+netsh interface ip add dns name="Local Area Connection" addr=208.67.220.220 index=3
+netsh interface ip add dns name="Local Area Connection" addr=8.8.4.4 index=4    
+"@
+}
