@@ -801,3 +801,33 @@ function Set-RMSClientNetworkConfiguration {
         }
     }
 }
+
+function Invoke-PushFileToAllBackOfficeComputers {
+    param (
+        [Parameter(Mandatory)]$SourceFile,
+        [Parameter(Mandatory)]$DestinationFile,
+        $BackOfficeComputers = (Get-BackOfficeComputers -Online),
+        [Switch]$Force
+    )
+    $TotalComputers = $BackOfficeComputers | measure | select -ExpandProperty Count
+    $i = 0
+    foreach ($Computer in $BackOfficeComputers) {
+        Write-Progress -Activity "Pushing file to Back Office computers" -PercentComplete ($i * 100 / $TotalComputers) -CurrentOperation $Computer
+        $RemoteDestinationFile = $DestinationFile | ConvertTo-RemotePath -ComputerName $Computer
+        try {
+            if ($Force) {
+                Copy-Item -Path $SourceFile -Destination $RemoteDestinationFile -Force -ErrorAction Stop
+                $Result = $true
+            } else {
+                Copy-Item -Path $SourceFile -Destination $RemoteDestinationFile -ErrorAction Stop
+                $Result = $true
+            }
+        } catch {$Result = $false}
+        [PSCustomObject][Ordered]@{
+            ComputerName = $Computer
+            Status = $Result
+        }
+        $i++       
+    }
+    Write-Progress -Activity "Pushing file to Back Office computers" -Completed
+}
