@@ -30,7 +30,7 @@ function Get-HeadquartersServers {
 
 function Get-BackOfficeComputers {
     param(
-        [Switch]$Online = $True
+        [Switch]$Online
     )
 
     $BackOfficeComputerNames = Get-ADComputer -Filter * -SearchBase "OU=Back Office Computers,OU=Remote Store Computers,OU=Computers,OU=Stores,OU=Departments,DC=tervis,DC=prv" |
@@ -44,9 +44,14 @@ function Get-BackOfficeComputers {
         }
     } -Parameters $BackOfficeComputerNames
 
-    $Responses | 
-    where Online -EQ $true |
-    Select -ExpandProperty BackOfficeComputerName
+    if ($Online) {
+        $Responses | 
+        where Online -EQ $true |
+        Select -ExpandProperty BackOfficeComputerName
+    } else {
+        $Responses |         
+        Select -ExpandProperty BackOfficeComputerName
+    }
 }
 
 function Get-RegisterComputers {
