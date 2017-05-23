@@ -842,9 +842,9 @@ netsh interface ip add dns name="Local Area Connection" addr=8.8.4.4 index=4
 }
 
 function Get-NetShCommandsToRunOnRMSClientComputer {
-    param (
-        [Parameter(Mandatory)][ValidateSet("BackOffice","POS1","POS2")][string]$RMSClientRole,
+    param (        
         [Parameter(Mandatory)][ValidateRange(0,255)][int]$StoreNetworkIdentifier,
+        [Parameter(Mandatory)][ValidateSet("BackOffice","POS1","POS2")][string]$RMSClientRole,
         $InterfaceName = "Local Area Connection"
     )
     Process {
