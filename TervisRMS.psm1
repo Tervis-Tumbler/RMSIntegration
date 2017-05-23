@@ -847,7 +847,7 @@ function Get-NetShCommandsToRunOnRMSClientComputer {
         [Parameter(Mandatory)][ValidateSet("BackOffice","POS1","POS2")][string]$RMSClientRole,
         $InterfaceName = "Local Area Connection"
     )
-    Process {
+    process {
         if ($RMSClientRole -eq "BackOffice") {
             $StaticIPAddress = '10.64.' + $StoreNetworkIdentifier + '.5'
         } elseif ($RMSClientRole -eq "POS1") {
@@ -861,5 +861,5 @@ function Get-NetShCommandsToRunOnRMSClientComputer {
 `r`nnetsh interface ip set address "$InterfaceName" static $StaticIPAddress 255.255.255.0 $DefaultGateway
 "@
         $NetshCommands
-        }
+    }
 }
