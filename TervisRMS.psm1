@@ -840,3 +840,26 @@ netsh interface ip add dns name="Local Area Connection" addr=208.67.220.220 inde
 netsh interface ip add dns name="Local Area Connection" addr=8.8.4.4 index=4    
 "@
 }
+
+function Get-NetShCommandsToRunOnRMSClientComputer {
+    param (
+        [Parameter(Mandatory)][ValidateSet("BackOffice","POS1","POS2")][string]$RMSClientRole,
+        [Parameter(Mandatory)][ValidateRange(0,255)][int]$StoreNetworkIdentifier,
+        $InterfaceName = "Local Area Connection"
+    )
+    Process {
+        if ($RMSClientRole -eq "BackOffice") {
+            $StaticIPAddress = '10.64.' + $StoreNetworkIdentifier + '.5'
+        } elseif ($RMSClientRole -eq "POS1") {
+            $StaticIPAddress = '10.64.' + $StoreNetworkIdentifier + '.11'
+        } elseif ($RMSClientRole -eq "POS2") {
+            $StaticIPAddress = '10.64.' + $StoreNetworkIdentifier + '.12'
+        }
+        $DefaultGateway = '10.64.' + $StoreNetworkIdentifier + '.1'
+        $NetshDNSCommands = Get-NetshCommandsToSetDNSOnStoreEndpoint
+        $NetshCommands = $NetshDNSCommands + @"
+`nnetsh interface ip set address "$InterfaceName" static $StaticIPAddress 255.255.255.0 $DefaultGateway
+"@
+        $NetshCommands
+        }
+}
