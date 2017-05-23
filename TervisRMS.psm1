@@ -858,7 +858,7 @@ function Get-NetShCommandsToRunOnRMSClientComputer {
         $DefaultGateway = '10.64.' + $StoreNetworkIdentifier + '.1'
         $NetshDNSCommands = Get-NetshCommandsToSetDNSOnStoreEndpoint
         $NetshCommands = $NetshDNSCommands + @"
-`nnetsh interface ip set address "$InterfaceName" static $StaticIPAddress 255.255.255.0 $DefaultGateway
+`r`nnetsh interface ip set address "$InterfaceName" static $StaticIPAddress 255.255.255.0 $DefaultGateway
 "@
         $NetshCommands
         }
