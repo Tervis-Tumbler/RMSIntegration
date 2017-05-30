@@ -871,3 +871,11 @@ function Invoke-RMSHQManagerRemoteAppProvision {
     Invoke-ClusterApplicationProvision -ClusterApplicationName RMSHQManagerRemoteApp -EnvironmentName $EnvironmentName
     $Nodes = Get-TervisClusterApplicationNode -ClusterApplicationName RMSHQManagerRemoteApp -EnvironmentName $EnvironmentName
 }
+
+function Get-TervisBackOfficeDefaultUserName {
+    param (
+        [Parameter(Mandatory)]$ComputerName
+    )
+    invoke-command -ComputerName $ComputerName -ScriptBlock {Get-Itemproperty "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\winlogon"} | select defaultusername -ExpandProperty defaultusername
+}
+ 
