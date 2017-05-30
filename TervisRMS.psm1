@@ -884,9 +884,10 @@ function Get-TervisBackOfficeDefaultUserName {
 
 function Invoke-NewBackOfficeRDPShorcuts {
     $BackOfficeComputers = Get-BackOfficeComputers
+    $ADDomain = Get-ADDomain
 
     foreach ($ComputerName in $BackOfficeComputers) {
-        $UserName = Get-TervisBackOfficeDefaultUserName -ComputerName $ComputerName
+        $UserName = (Get-TervisBackOfficeDefaultUserName -ComputerName $ComputerName) -replace $ADDomain.Name, ""
         New-BackOfficeRemoteDesktopRDPFile -ComputerName $ComputerName -UserName $UserName
         New-BackOfficeRemoteDesktopRDPFile -ComputerName $ComputerName -ManagerRDPFile
     }
