@@ -876,6 +876,18 @@ function Get-TervisBackOfficeDefaultUserName {
     param (
         [Parameter(Mandatory)]$ComputerName
     )
-    invoke-command -ComputerName $ComputerName -ScriptBlock {Get-Itemproperty "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\winlogon"} | select defaultusername -ExpandProperty defaultusername
+    invoke-command -ComputerName $ComputerName -ScriptBlock {
+        Get-Itemproperty "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\winlogon"
+    } | 
+    select defaultusername -ExpandProperty defaultusername
 }
- 
+
+function Invoke-NewBackOfficeRDPShorcuts {
+    $BackOfficeComputers = Get-BackOfficeComputers
+
+    foreach ($ComputerName in $BackOfficeComputers) {
+        $UserName = Get-TervisBackOfficeDefaultUserName -ComputerName $ComputerName
+        New-BackOfficeRemoteDesktopRDPFile -ComputerName $ComputerName -UserName $UserName
+        New-BackOfficeRemoteDesktopRDPFile -ComputerName $ComputerName -ManagerRDPFile
+    }
+}
