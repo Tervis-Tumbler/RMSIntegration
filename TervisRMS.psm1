@@ -892,3 +892,17 @@ function Invoke-NewBackOfficeRDPShorcuts {
         New-BackOfficeRemoteDesktopRDPFile -ComputerName $ComputerName -ManagerRDPFile
     }
 }
+
+function Copy-TervisRMSCustomReportsToNode {
+    param (
+        [Parameter(Mandatory,ValueFromPipelineByPropertyName)]$ComputerName
+    )
+    begin {
+        $LocalDestinationPath = "C:\Program Files (x86)\Microsoft Retail Management System\Headquarters\Reports"
+        $LocalSourcePath = "$PSScriptRoot\RMSReportsToBeCopied\*"
+    }
+    process {
+        $RemoteDestinationPath = $LocalDestinationPath | ConvertTo-RemotePath -ComputerName $ComputerName
+        Copy-Item -Path $LocalSourcePath -Destination $RemoteDestinationPath
+    }
+}
