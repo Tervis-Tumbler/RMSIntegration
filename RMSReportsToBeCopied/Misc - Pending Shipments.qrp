@@ -1,0 +1,300 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeMisc
+   ReportTitle = "Pending Shipments"
+   PageOrientation = pageorientationLandscape
+   WordWrap = True
+   ShowDateTimePicker = False
+   OutLineMode = True
+   Groups = 1
+   GroupDescription = ""
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = ""
+   PreQuery1 = ""
+   PreQuery2 = ""
+   TablesQueried = <BEGIN>
+
+      FROM  Shipping WITH(NOLOCK) LEFT JOIN [Transaction] WITH(NOLOCK) ON Shipping.TransactionNumber = [Transaction].TransactionNumber
+         LEFT JOIN Customer WITH(NOLOCK) ON [Transaction].CustomerID = Customer.ID 
+         LEFT JOIN TransactionEntry WITH(NOLOCK) ON [Transaction].TransactionNumber = TransactionEntry.TransactionNumber
+         LEFT JOIN Item ON Item.ID = TransactionEntry.ItemID
+
+<END>
+   SelCriteria = "Shipping.DateProcessed is NULL"
+   GroupBy = ""
+   SortOrder = ""
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "As Of: <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+Begin Filter
+   FieldName = "Shipping.DateCreated"
+   FilterOp = reportfilteropBetween
+   FilterLoLim = "<Today>"
+   FilterHilim = "<Today>"
+End Filter
+
+
+//--- Columns ---//
+
+Begin Column
+   FieldName = "Shipping.TransactionNumber"
+   DrillDownFieldName = "[Transaction].TransactionNumber"
+   DrillDownReportName = ""
+   Title = "Transaction"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1600
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Customer.AccountNumber"
+   DrillDownFieldName = "Customer.AccountNumber"
+   DrillDownReportName = ""
+   Title = "Cust. Account"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1400
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+
+Begin Column
+   FieldName = "Shipping.DateCreated"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Transaction Date"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+
+Begin Column
+   FieldName = "ShipTo"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Shipped To"
+   VBDataType = vbString
+   Formula = <BEGIN>
+   
+      REPLACE(
+
+         CASE LTRIM(RTRIM(Shipping.Name))
+            WHEN '' THEN ''
+            ELSE Shipping.Name + CHAR(13) 
+         END
+         
+         + Shipping.Company + CHAR(13) 
+         + Shipping.Address + CHAR(13) 
+         + Shipping.Address2 + CHAR(13) 
+         + Shipping.City + ', ' + Shipping.State + ' ' + Shipping.Zip + CHAR(13)
+         + Shipping.Country + CHAR(13)
+         + 'Phone: ' + Shipping.PhoneNumber + CHAR(13) + '   '
+         , CHAR(13)+ CHAR(13), CHAR(13))
+
+<END>
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2300
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "BillTo"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Bill To"
+   VBDataType = vbString
+   Formula = <BEGIN>
+   
+      REPLACE(
+      
+         CASE LTRIM(RTRIM(Customer.FirstName + Customer.LastName))
+            WHEN '' THEN ''
+            ELSE Customer.FirstName + ' ' + Customer.LastName + CHAR(13) 
+         END
+         
+         + Customer.Company + CHAR(13) 
+         + Customer.Address + CHAR(13) 
+         + Customer.Address2 + CHAR(13) 
+         + Customer.City + ', ' + Customer.State + ' ' + Customer.Zip + CHAR(13)
+         + Customer.Country + CHAR(13)
+         + 'Phone: ' + Customer.PhoneNumber + CHAR(13) + '   '
+         , CHAR(13)+ CHAR(13), CHAR(13))
+
+<END>
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2300
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Carrier"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Carrier"
+   VBDataType = vbString
+   Formula = "Shipping.CarrierName + CHAR(13) + Shipping.ServiceName"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1365
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Shipping.Charge"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Charge"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 945
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.ItemLookupCode"
+   DrillDownFieldName = "Item.ItemLookupCode"
+   DrillDownReportName = ""
+   Title = "Item Lookup Code"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1300
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.Description"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Description"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1300
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "TransactionEntry.Quantity"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Quantity"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 900
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Shipping.Notes"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Notes"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1920
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Shipping.TotalWeight"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Weight"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 915
+   GroupMethod = groupmethodSum
+   ColFormat = "#.##"
+End Column
+
+Begin Column
+   FieldName = "Shipping.DeclaredValue"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Value"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1065
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+

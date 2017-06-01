@@ -1,0 +1,197 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeCustomer
+   ReportTitle = "Accounts Receivable (Summary) "
+   PageOrientation = pageorientationLandscape
+   WordWrap = False
+   ShowDateTimePicker = True
+   OutLineMode = True
+   Groups = 0
+   GroupDescription = "Total"
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = "ListOpenAccountReceivableSummary"
+   PreQuery1 = ""
+   PreQuery2 = ""
+   TablesQueried = "FROM #ListOpenAccountReceivableSummary LEFT JOIN Customer ON #ListOpenAccountReceivableSummary.CustomerID = Customer.ID "
+   SelCriteria = ""
+   GroupBy = ""
+   SortOrder = ""
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "As Of: <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+Begin Filter
+   FieldName = "Total"
+   FilterOp = reportfilteropNotEqual
+   FilterLoLim = "0.00"
+   FilterHilim = "0.00"
+End Filter
+
+
+//--- Columns ---//
+
+Begin Column
+   FieldName = "#ListOpenAccountReceivableSummary.AccountNumber"
+   DrillDownFieldName = "#ListOpenAccountReceivables.AccountNumber"
+   DrillDownReportName = "Customer - Accounts Receivable (Detailed) Report.qrp"
+   Title = "Account #"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1710
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "#ListOpenAccountReceivableSummary.Name"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Name"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1905
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "#ListOpenAccountReceivableSummary.Company"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Company"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1905
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "#ListOpenAccountReceivableSummary.[Current]"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Current"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1300
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "#ListOpenAccountReceivableSummary.OneToThirty"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "1-30"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1300
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "#ListOpenAccountReceivableSummary.ThirtyOneToSixty"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "31-60"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1300
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "#ListOpenAccountReceivableSummary.SixtyOneToNinety"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "61-90"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1300
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "#ListOpenAccountReceivableSummary.NinetyPlus"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "90+"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1300
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Total"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Total"
+   VBDataType = vbCurrency
+   Formula = "#ListOpenAccountReceivableSummary.[Current] + #ListOpenAccountReceivableSummary.OneToThirty + #ListOpenAccountReceivableSummary.ThirtyOneToSixty + #ListOpenAccountReceivableSummary.SixtyOneToNinety + #ListOpenAccountReceivableSummary.NinetyPlus "
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1350
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+

@@ -1,0 +1,170 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeSales
+   ReportTitle = "Tender Summary"
+   PageOrientation = pageorientationPortrait
+   WordWrap = True
+   OutLineMode = True
+   Groups = 2
+   GroupDescription = ""
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = ""
+   TablesQueried = "FROM TenderEntry LEFT JOIN [Transaction] ON TenderEntry.TransactionNumber = [Transaction].TransactionNumber LEFT JOIN Batch ON [Transaction].BatchNumber = Batch.BatchNumber LEFT JOIN Register ON Batch.RegisterID = Register.ID"
+   SelCriteria = ""
+   GroupBy = ""
+   SortOrder = "TenderEntry.Amount, [Transaction].Time, TenderEntry.Description, Register.Description"
+End ReportSummary
+
+ 
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "Generated On <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+Begin Filter
+   FieldName = "[Transaction].Time"
+   FilterOp = reportfilteropbetween
+   FilterLoLim = "<Today>"
+   FilterHilim = "<Today>"
+End Filter
+
+
+//--- Columns ---//
+
+Begin Column
+   FieldName = "Register.Description"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Register"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2000
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column
+
+Begin Column
+   FieldName = "TenderEntry.Description"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Tender"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2000
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column
+
+Begin Column
+   FieldName = "[Transaction].Time"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Date"
+   VBDataType = vbdate
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1500
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column
+
+Begin Column
+   FieldName = "Tenderentry.Amount"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Amount"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2000
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column
+
+Begin Column
+   FieldName = "Tenderentry.Amount"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Max Amount"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2000
+   GroupMethod = groupmethodMax
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column
+
+Begin Column
+   FieldName = "Tenderentry.Amount"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Min Amount"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2000
+   GroupMethod = groupmethodMin
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column
+
+Begin Column
+   FieldName = "Tenderentry.Amount"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Avg Amount"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2000
+   GroupMethod = groupmethodAverage
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column

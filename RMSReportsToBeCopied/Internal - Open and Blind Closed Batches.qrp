@@ -1,0 +1,171 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeMisc
+   ReportTitle = "Open And Blind Closed Batches"
+   PageOrientation = pageorientationPortrait
+   OutLineMode = True
+   Groups = 0
+   GroupDescription = "Total"
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = ""
+   TablesQueried = "FROM Batch LEFT JOIN Register ON Batch.RegisterID = Register.ID"
+   SelCriteria = "(Batch.Status & 1) = 0 "
+   GroupBy = ""
+   SortOrder = "Batch.BatchNumber"
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "As Of: <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+
+//--- Columns ---//
+
+Begin Column
+   FieldName = "Batch.BatchNumber"
+   DrillDownFieldName = "Batch.BatchNumber"
+   DrillDownReportName = ""
+   Title = "Batch"
+   VBDataType = vbLong
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 810
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "BatchStatus"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Status"
+   VBDataType = vbString
+   Formula = "CASE Batch.Status & 9 WHEN 0 THEN 'Open' WHEN 8 THEN 'Blind Closed' ELSE 'Closed' END"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = True
+   ColWidth = 1245
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Register.Number"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Register"
+   VBDataType = vbLong
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 930
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "OpeningTime"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Opening Time"
+   VBDataType = vbString
+   Formula = "CONVERT(nvarchar, Batch.OpeningTime, 20)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1755
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Batch.ClosingTime"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Closing Time"
+   VBDataType = vbString
+   Formula = "CASE WHEN (Batch.ClosingTime >= Batch.OpeningTime) THEN CONVERT(nvarchar, Batch.ClosingTime, 20) ELSE ' ' END"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1815
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Batch.OpeningTotal"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Opening Total"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1245
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Batch.ClosingTotal"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Closing Total"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1245
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "OverShort"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Over/Short"
+   VBDataType = vbCurrency
+   Formula = "(PaidOut + Dropped + LayawayClosed + PaidOnAccount + CustomerDepositRedeemed + ClosingTotal) - (OpeningTotal + Sales + Returns + Tax + Shipping + LayawayPaid + PaidToAccount + CustomerDepositMade + DebitSurcharge + CashBackSurcharge)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1245
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+

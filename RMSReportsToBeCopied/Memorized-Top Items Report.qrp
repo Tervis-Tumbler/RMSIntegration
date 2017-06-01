@@ -1,0 +1,151 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeSales
+   ReportTitle = "Top Items Report"
+   PageOrientation = pageorientationPortrait
+   WordWrap = False
+   ShowDateTimePicker = False
+   OutLineMode = True
+   Groups = 0
+   GroupDescription = ""
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = ""
+   PreQuery1 = ""
+   PreQuery2 = ""
+   TablesQueried = "FROM TransactionEntry WITH(NOLOCK)  INNER JOIN [Transaction] WITH(NOLOCK) ON TransactionEntry.TransactionNumber = [Transaction].TransactionNumber LEFT JOIN Item WITH (NOLOCK) On TransactionEntry.ItemID = Item.ID"
+   SelCriteria = ""
+   GroupBy = "Item.ItemLookupCode,[Transaction].Time"
+   SortOrder = "Sales DESC"
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "Generated On <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+
+//--- Columns ---//
+
+Begin Column
+   FieldName = "ItemLookupCode"
+   DrillDownFieldName = "Item.ItemLookupCode"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Item Lookup Code"
+   VBDataType = vbString
+   Formula = "MAX(Item.ItemLookupCode)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2055
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ItemDescription"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Description"
+   VBDataType = vbString
+   Formula = "MAX(Item.Description)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2835
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "[Transaction].Time"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Date Sold"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1035
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "QtySold"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Qty Sold"
+   VBDataType = vbDouble
+   Formula = "SUM(TransactionEntry.Quantity)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1710
+   GroupMethod = groupmethodSum
+   ColFormat = "#.##"
+End Column
+
+Begin Column
+   FieldName = "Sales"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Sales"
+   VBDataType = vbCurrency
+   Formula = "SUM(TransactionEntry.Price * TransactionEntry.Quantity)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1830
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Profit"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Profit"
+   VBDataType = vbCurrency
+   Formula = "SUM((TransactionEntry.Price - TransactionEntry.Cost) * TransactionEntry.Quantity)"
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1815
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+

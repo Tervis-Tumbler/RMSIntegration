@@ -1,0 +1,163 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeSales
+   ReportTitle = "Top Cashiers Report (Tax Included in Sales)"
+   PageOrientation = pageorientationPortrait
+   OutLineMode = True
+   Groups = 0
+   GroupDescription = ""
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = ""
+   TablesQueried = "FROM TransactionEntry WITH(NOLOCK)  INNER JOIN [Transaction] WITH(NOLOCK) ON TransactionEntry.TransactionNumber = [Transaction].TransactionNumber LEFT JOIN Cashier WITH(NOLOCK) ON [Transaction].CashierID = Cashier.ID"
+   SelCriteria = ""
+   GroupBy = "Cashier.Number"
+   SortOrder = "Sales DESC"
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "Generated On <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+Begin Filter
+   FieldName = "[Transaction].Time"
+   FilterOp = reportfilteropBetween
+   FilterLoLim = "<YearStart>"
+   FilterHilim = "<Today>"
+End Filter
+
+
+//--- Columns ---//
+
+Begin Column
+   FieldName = "CashierNumber"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Cashier #"
+   VBDataType = vbString
+   Formula = "MAX(Cashier.Number)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1800
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "CashierName"
+   DrillDownFieldName = "Cashier.Name"
+   DrillDownReportName = ""
+   Title = "Name"
+   VBDataType = vbString
+   Formula = "MAX(Cashier.Name)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2800
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "[Transaction].Time"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Date Sold"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = True
+   FilterDisabled = False
+   ColWidth = 1000
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "QtySold"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Qty Sold"
+   VBDataType = vbDouble
+   Formula = "SUM(TransactionEntry.Quantity)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1700
+   GroupMethod = groupmethodSum
+   ColFormat = "#.##"
+End Column
+
+Begin Column
+   FieldName = "Sales"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Sales"
+   VBDataType = vbCurrency
+   Formula = "SUM(TransactionEntry.Price * TransactionEntry.Quantity)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1500
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "SalesEx"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Sales (Tax Ex)"
+   VBDataType = vbCurrency
+   Formula = "SUM((TransactionEntry.Price * TransactionEntry.Quantity) - TransactionEntry.SalesTax)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1500
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Profit"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Profit"
+   VBDataType = vbCurrency
+   Formula = "SUM((TransactionEntry.Price * TransactionEntry.Quantity) - (TransactionEntry.Cost * TransactionEntry.Quantity) - TransactionEntry.SalesTax)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1500
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+

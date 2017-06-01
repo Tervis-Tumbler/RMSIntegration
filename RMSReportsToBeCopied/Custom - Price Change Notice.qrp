@@ -1,0 +1,260 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeCustom
+   ReportTitle = "Price Management - Price Change Notice"
+   PageOrientation = pageorientationLandscape
+   OutLineMode = True
+   Groups = 1
+   GroupDescription = ""
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = ""
+   TablesQueried = "From RRHQMiscellaneous_WorkSheet Left Join (Select WorksheetID,ItemID,Max(Price) As Price,Max(NewPrice) As NewPrice From RRHQMiscellaneous_WorkSheetEntry Where Price<>NewPrice Group By WorksheetID,ItemID) As New On New.WorksheetID = RRHQMiscellaneous_WorkSheet.ID Left Join Item On Item.ID = New.ItemID Left Join HQUser On HQUser.ID = RRHQMiscellaneous_WorkSheet.LastUpdatedBy Left Join RRHQMiscellaneous_Reference On RRHQMiscellaneous_Reference.WorksheetID =  RRHQMiscellaneous_WorkSheet.ID Left Join Worksheet On Worksheet.ID = RRHQMiscellaneous_Reference.HQWorksheetID Left Join Department On Department.ID = Item.DepartmentID Left Join Category On Category.ID = Item.CategoryID Where RRHQMiscellaneous_WorkSheet.Status = 1 And Worksheet.Style = 304"
+   SelCriteria = ""
+   GroupBy = ""
+   SortOrder = ""
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "As Of: <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+
+//--- Columns ---//
+
+Begin Column
+   FieldName = "RRHQMiscellaneous_WorkSheet.ID"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Reference #"
+   VBDataType = vbLong
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1245
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "RRHQMiscellaneous_Reference.HQWorksheetID"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "HQ Reference #"
+   VBDataType = vbLong
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1245
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "RRHQMiscellaneous_WorkSheet.Name"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Name"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2000
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "HQUser.UserName"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "HQ User Name"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Status"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Status"
+   VBDataType = vbString
+   Formula = "CASE RRHQMiscellaneous_WorkSheet.Status WHEN 1 THEN 'Committed' ELSE 'In Process' END"
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.ItemLookupCode"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Item Lookup Code"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1800
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.Description"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Description"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2000
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.Subdescription1"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Sub Description 1"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.Subdescription2"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Sub Description 2"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.Subdescription3"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Sub Description 3"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "New.Price"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Price"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "New.NewPrice"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "New Price"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Department.Name"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Dept Name"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1800
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Category.Name"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Cat Name"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1800
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column

@@ -1,0 +1,235 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeSales
+   ReportTitle = "Store Averages"
+   PageOrientation = pageorientationLandscape
+   WordWrap = False
+   ShowDateTimePicker = False
+   OutLineMode = True
+   Groups = 1
+   GroupDescription = ""
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = ""
+   PreQuery1 = <BEGIN>
+IF EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'VIEWStoreSales') DROP TABLE VIEWStoreSales
+IF EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'VIEWStoreQty') DROP TABLE VIEWStoreQty
+<END>
+   PreQuery2 = <BEGIN>
+   SELECT [Transaction].StoreID,
+ 	COUNT([Transaction].TransactionNumber) as TotalTrxs, 
+	CONVERT(nvarchar, [Transaction].Time, 101)  as DayOfYear, 
+       	SUM([Transaction].Total-[Transaction].SalesTax) as TotalSales
+
+   INTO ViewStoreSales
+
+   FROM [Transaction] 
+  	
+   GROUP BY [Transaction].StoreID, CONVERT(nvarchar, [Transaction].Time, 101)
+   
+
+
+[GO]
+
+   SELECT [Transaction].StoreID,
+	CONVERT(nvarchar, [Transaction].Time, 101)  as DayOfYear,
+        SUM(TransactionEntry.Cost*TransactionEntry.Quantity) as TotalCost,  
+	SUM(TransactionEntry.Quantity) as TotalQty
+
+   INTO VIEWStoreQty
+
+   FROM [Transaction] 
+      LEFT JOIN TransactionEntry ON [Transaction].TransactionNumber = TransactionEntry.TransactionNumber
+       AND [Transaction].StoreID = TransactionEntry.StoreID
+  	
+   GROUP BY [Transaction].StoreID, CONVERT(nvarchar, [Transaction].Time, 101)
+
+[GO]
+UPDATE ViewStoreSales SET DayOfYear = CONVERT(nvarchar, DayOfYear + ' 12:00:01 AM')
+
+[GO]
+UPDATE ViewStoreQty SET DayOfYear = CONVERT(nvarchar, DayOfYear + ' 12:00:01 AM')
+
+[GO]
+ALTER TABLE VIEWStoreQty
+ALTER COLUMN DayOfYear DateTime
+
+[GO]
+ALTER TABLE VIEWStoreSales
+ALTER COLUMN DayOfYear DateTime
+
+
+[GO]
+ALTER TABLE VIEWStoreSales
+ALTER COLUMN TotalTrxs Float
+
+	
+<END>
+   TablesQueried = <BEGIN>
+   FROM VIEWStoreSales 
+	LEFT JOIN VIEWStoreQty ON VIEWStoreSales.DayOfYear = VIEWStoreQty.DayOfYear 
+         AND ViewStoreQty.StoreID = ViewStoreSales.StoreID
+ 	LEFT JOIN Store ON ViewStoreSales.StoreID = Store.ID
+	
+<END>
+   SelCriteria = ""
+   GroupBy = "Store.ID, Store.Name"
+   SortOrder = ""
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "Generated On <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+Begin Filter
+   FieldName = "VIEWStoreSales.DayOfYear"
+   FilterOp = reportfilteropBetween
+   FilterLoLim = "<MonthStart>"
+   FilterHilim = "<Today>"
+End Filter
+
+
+//--- Columns ---//
+
+
+Begin Column
+   FieldName = "Store.ID"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Store ID"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1395
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Store.Name"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Store Name"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1395
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "TotalTrxs"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Transactions/Day"
+   VBDataType = vbDouble
+   Formula = "AVG(VIEWStoreSales.TotalTrxs)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1590
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+
+Begin Column
+   FieldName = "Totalitems"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Units/Transaction"
+   VBDataType = vbDouble
+   Formula = "SUM(VIEWStoreQty.TotalQty)/SUM(ViewStoreSales.TotalTrxs)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1620
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "TotalSales"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "$/Transaction"
+   VBDataType = vbCurrency
+   Formula = "SUM(VIEWStoreSales.TotalSales)/SUM(ViewStoreSales.TotalTrxs)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1395
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "TotalGP"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Profit Margin"
+   VBDataType = vbDouble
+   Formula = "(SUM(VIEWStoreSales.TotalSales)-SUM(VIEWStoreQty.TotalCost))/SUM(ViewStoreSales.TotalSales)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1395
+   GroupMethod = groupmethodNone
+   ColFormat = "%.##"
+End Column
+
+
+Begin Column
+   FieldName = "VIEWStoreSales.DayOfYear"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Date"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = True
+   FilterDisabled = False
+   ColWidth = 1395
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+

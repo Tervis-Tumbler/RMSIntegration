@@ -1,0 +1,620 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeSales
+   ReportTitle = "Sales Transaction Repor"
+   PageOrientation = pageorientationPortrait
+   WordWrap = False
+   ShowDateTimePicker = False
+   OutLineMode = True
+   Groups = 1
+   GroupDescription = ""
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = ""
+   PreQuery1 = ""
+   PreQuery2 = ""
+   TablesQueried = <BEGIN>
+      FROM     TransactionEntry INNER JOIN [Transaction] WITH(NOLOCK) ON TransactionEntry.TransactionNumber = [Transaction].TransactionNumber 
+         INNER JOIN  Batch WITH(NOLOCK) ON [Transaction].BatchNumber = Batch.BatchNumber 
+         LEFT JOIN   Item WITH(NOLOCK) ON TransactionEntry.ItemID = Item.ID 
+         LEFT JOIN   Department WITH(NOLOCK) ON Item.DepartmentID = Department.ID 
+         LEFT JOIN   Category WITH(NOLOCK) ON Item.CategoryID = Category.ID 
+         LEFT JOIN   Supplier WITH(NOLOCK) ON Item.SupplierID = Supplier.ID 
+         LEFT JOIN   ReasonCode AS ReasonCodeDiscount WITH(NOLOCK) ON TransactionEntry.DiscountReasonCodeID = ReasonCodeDiscount.ID 
+         LEFT JOIN   ReasonCode AS ReasonCodeTaxChange WITH(NOLOCK) ON TransactionEntry.TaxChangeReasonCodeID = ReasonCodeTaxChange.ID
+         LEFT JOIN   ReasonCode AS ReasonCodeReturn WITH(NOLOCK) ON TransactionEntry.ReturnReasonCodeID = ReasonCodeReturn.ID
+         LEFT JOIN	Register WITH(NOLOCK) ON Batch.RegisterID = Register.ID
+         LEFT JOIN   Customer WITH(NOLOCK) ON [Transaction].CustomerID = Customer.ID
+         LEFT JOIN   Cashier WITH(NOLOCK) ON [Transaction].CashierID = Cashier.ID
+			LEFT JOIN   QuantityDiscount WITH(NOLOCK) ON TransactionEntry.QuantityDiscountID = QuantityDiscount.ID
+<END>
+   SelCriteria = ""
+   GroupBy = ""
+   SortOrder = ""
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "Generated On <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+Begin Filter
+   FieldName = "[Transaction].Time"
+   FilterOp = reportfilteropBetween
+   FilterLoLim = "10/8/2008"
+   FilterHilim = "10/8/2008"
+   FilterNegated = False
+   FilterConnector = reportfilterbooleanconAND
+End Filter
+
+
+//--- Columns ---//
+
+Begin Column
+   FieldName = "[Transaction].TransactionNumber"
+   DrillDownFieldName = "[Transaction].TransactionNumber"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Transaction"
+   VBDataType = vbLong
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1245
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Department.Name"
+   DrillDownFieldName = "Department.Name"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Department"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2205
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Category.Name"
+   DrillDownFieldName = "Category.Name"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Category"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1515
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Item.ItemLookupCode"
+   DrillDownFieldName = "Item.ItemLookupCode"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Item"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1380
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Item.Description"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Description"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2115
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "TransactionEntry.Quantity"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Qty Sold"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 810
+   GroupMethod = groupmethodSum
+   ColFormat = "#.##"
+End Column
+
+Begin Column
+   FieldName = "TransactionEntry.Price"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Sold Price"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 975
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Total"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Total Sales"
+   VBDataType = vbCurrency
+   Formula = "TransactionEntry.Price * TransactionEntry.Quantity"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1275
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Supplier.SupplierName"
+   DrillDownFieldName = "Supplier.SupplierName"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Supplier"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 825
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Item.BinLocation"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Bin Location"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1140
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Item.WebItem"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Web Item"
+   VBDataType = vbBoolean
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1050
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignCenterCenter
+End Column
+
+Begin Column
+   FieldName = "Item.Quantity"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "On Hand"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 810
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.Price"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Price"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 555
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.PriceA"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Price A"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 720
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.PriceB"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Price B"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 660
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.PriceC"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Price C"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 720
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.SalePrice"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Sale Price"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 945
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.MSRP"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "MSRP"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 945
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.SaleStartDate"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Sale Starts"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1020
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.SaleEndDate"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Sale Ends"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 930
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.LastSold"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Last Sold"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 900
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "[Transaction].Time"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Date Sold"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 900
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "TransactionEntry.Cost"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Cost"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 900
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Profit"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Profit"
+   VBDataType = vbCurrency
+   Formula = "TransactionEntry.Price - TransactionEntry.Cost"
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 900
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ProfitMargin"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Profit Margin"
+   VBDataType = vbDouble
+   Formula = "CASE WHEN TransactionEntry.Price <> 0 THEN ((TransactionEntry.Price - TransactionEntry.Cost) / TransactionEntry.Price) ELSE 0 END"
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 900
+   GroupMethod = groupmethodAverage
+   ColFormat = "0.00%"
+End Column
+
+Begin Column
+   FieldName = "ReasonCodeDiscount.Description"
+   DrillDownFieldName = "Reasoncode.Description"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Discount Reason Code"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2280
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "ReasonCodeTaxChange.Description"
+   DrillDownFieldName = "Reasoncode.Description"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Tax Change Reason Code"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2280
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "ReasonCodeReturn.Description"
+   DrillDownFieldName = "Reasoncode.Description"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Return Reason Code"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2280
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "PriceSource"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Price Source"
+   VBDataType = vbString
+   Formula = "CASE TransactionEntry.PriceSource WHEN 1 THEN 'Regular Price' WHEN 2 THEN (CASE WHEN TransactionEntry.QuantityDiscountID <> 0 THEN QuantityDiscount.Description ELSE 'Quantity Discount' END) WHEN 3 THEN 'Buydown Discount' WHEN 4 THEN 'Price Level Disc.' WHEN 5 THEN 'Sale Price' WHEN 6 THEN 'Disc. from Reg. Price' WHEN 7 THEN 'Disc. from Cur. Price' WHEN 8 THEN 'Cost Markup Disc.' WHEN 9 THEN 'Profit Margin Disc.' WHEN 10 THEN 'Cashier Set' WHEN 11 THEN 'Component'  WHEN 12 THEN 'Price Level A Disc.' WHEN 13 THEN 'Price Level B Disc.' WHEN 14 THEN 'Price Level C Disc.'  WHEN 15 THEN 'Disc. from Reg. Price' WHEN 16 THEN 'Disc. from Cur. Price' WHEN 17 THEN 'Cost Markup Disc.' WHEN 18 THEN 'Profit Margin Disc.' ELSE 'Unknown' END"
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2280
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Register.Number"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Register"
+   VBDataType = vbLong
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1245
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "CustomerName"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Customer"
+   VBDataType = vbString
+   Formula = "Customer.LastName + ', ' + Customer.FirstName"
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1350
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Customer.AccountNumber"
+   DrillDownFieldName = "Customer.AccountNumber"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Account #"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1035
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Cashier.Name"
+   DrillDownFieldName = "Cashier.Name"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Cashier"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1350
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+

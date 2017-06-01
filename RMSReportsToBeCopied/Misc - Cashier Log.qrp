@@ -1,0 +1,182 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeMisc
+   ReportTitle = "Cashier Log"
+   PageOrientation = pageorientationPortrait
+   OutLineMode = True
+   Groups = 1
+   GroupDescription = ""
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = ""
+   TablesQueried = "FROM TimeCard INNER JOIN Cashier ON TimeCard.CashierID = Cashier.ID LEFT JOIN Register ON TimeCard.RegisterID = Register.ID"
+   SelCriteria = ""
+   GroupBy = ""
+   SortOrder = ""
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "Generated On <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+Begin Filter
+   FieldName = "TimeCard.TimeIn"
+   FilterOp = reportfilteropGreaterEqual
+   FilterLoLim = "<LastWeekStart>"
+   FilterHilim = ""
+End Filter
+
+
+//--- Columns ---//
+
+Begin Column
+   FieldName = "Cashier.Number"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Cashier Number"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1995
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Cashier.Name"
+   DrillDownFieldName = "Cashier.Name"
+   DrillDownReportName = ""
+   Title = "Cashier Name"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2115
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Register.Number"
+   DrillDownFieldName = "Register.Number"
+   DrillDownReportName = ""
+   Title = "Register"
+   VBDataType = vbLong
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 975
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "TimeCard.TimeIn"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Time In"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1875
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignRightCenter
+End Column
+
+Begin Column
+   FieldName = "TimeCard.TimeOut"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Time Out"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1875
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignRightCenter
+End Column
+
+Begin Column
+   FieldName = "LogIn"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Log In"
+   VBDataType = vbString
+   Formula = "CONVERT(nvarchar,Timecard.TimeIn,20)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = True
+   ColWidth = 1875
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignRightCenter
+End Column
+
+Begin Column
+   FieldName = "LogOut"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Log Out"
+   VBDataType = vbString
+   Formula = "CASE WHEN (TimeCard.TimeOut >= TimeCard.TimeIn) THEN CONVERT(nvarchar, TimeCard.TimeOut, 20) ELSE 'Not Logged Out' END"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = True
+   ColWidth = 1875
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignRightCenter
+End Column
+
+Begin Column
+   FieldName = "TimeCard.Hours"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Hours"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1410
+   GroupMethod = groupmethodSum
+   ColFormat = "#10000.##"
+End Column
+

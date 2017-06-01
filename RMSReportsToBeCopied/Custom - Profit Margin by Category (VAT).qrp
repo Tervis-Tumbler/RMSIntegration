@@ -1,0 +1,265 @@
+//--- Report Summary --- //
+//--- Author - GZK   	     --- //
+//--- Date Modified 6/14/2010 --- //
+
+Begin ReportSummary
+   ReportType = reporttypeSales
+   ReportTitle = "Profit Margin by Category (Tax Included in Sales)"
+   PageOrientation = pageorientationPortrait
+   WordWrap = False
+   ShowDateTimePicker = False
+   OutLineMode = True
+   Groups = 1
+   GroupDescription = ""
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = ""
+   PreQuery1 = <BEGIN>
+IF EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.VIEWS WHERE TABLE_NAME = 'ViewItems') DROP VIEW ViewItems
+<END>
+   PreQuery2 = <BEGIN>
+     CREATE VIEW ViewItems AS
+         SELECT 
+	     CASE WHEN Category.ID IS NULL THEN 0 ELSE Category.ID END AS CategoryID,
+	     SUM(Item.Quantity) as Quantity,
+	     SUM(Item.Quantity * Item.Cost) as InvCost
+ 
+         FROM Item 
+	     LEFT JOIN Category ON Item.CategoryID = Category.ID
+		 GROUP BY Category.ID
+          
+     <END>
+   TablesQueried = <BEGIN>
+      FROM Item 
+	 LEFT JOIN TransactionEntry WITH(NOLOCK) ON Item.ID = TransactionEntry.ItemID
+         INNER JOIN [Transaction] WITH(NOLOCK) ON TransactionEntry.TransactionNumber = [Transaction].TransactionNumber 
+         LEFT JOIN Category WITH(NOLOCK) ON Item.CategoryID = Category.ID 
+         LEFT JOIN Supplier WITH(NOLOCK) ON Item.SupplierID = Supplier.ID
+	 LEFT JOIN ViewItems WITH(NOLOCK) ON Item.CategoryID = ViewItems.CategoryID
+
+
+<END>
+   SelCriteria = ""
+   GroupBy = "Category.ID, Category.Name"
+   SortOrder = ""
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "Generated On <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+Begin Filter
+   FieldName = "[Transaction].Time"
+   FilterOp = reportfilteropBetween
+   FilterLoLim = "<MonthStart>"
+   FilterHilim = "<Today>"
+   FilterNegated = False
+   FilterConnector = reportfilterbooleanconAND
+End Filter
+
+
+//--- Columns ---//
+
+
+Begin Column
+   FieldName = "CategoryName"
+   DrillDownFieldName = "Category.Name"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Category"
+   VBDataType = vbString
+   Formula = "CASE WHEN Category.ID IS NULL THEN 'Unassigned' ELSE Category.Name END"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1600
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "TransactionEntry.Quantity"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Units Sold"
+   VBDataType = vbDouble
+   Formula = "SUM(TransactionEntry.Quantity)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1100
+   GroupMethod = groupmethodSum
+   ColFormat = "#,###"
+End Column
+
+Begin Column
+   FieldName = "Total"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Retail $ Sold"
+   VBDataType = vbCurrency
+   Formula = "SUM(TransactionEntry.Price * TransactionEntry.Quantity)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1150
+   GroupMethod = groupmethodSum
+   ColFormat = "$#,###.##"
+End Column
+
+Begin Column
+   FieldName = "Total"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Retail $ Sold (Tax Ex)"
+   VBDataType = vbCurrency
+   Formula = "SUM(TransactionEntry.Price * TransactionEntry.Quantity - TransactionEntry.SalesTax)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1800
+   GroupMethod = groupmethodSum
+   ColFormat = "$#,###.##"
+End Column
+
+Begin Column
+   FieldName = "TransactionEntry.Cost"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Cost $ Sold"
+   VBDataType = vbCurrency
+   Formula = "SUM(TransactionEntry.Quantity * TransactionEntry.Cost)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1100
+   GroupMethod = groupmethodSum
+   ColFormat = "$#,###.##"
+End Column
+
+Begin Column
+   FieldName = "SalesTax"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Sales Tax"
+   VBDataType = vbCurrency
+   Formula = "SUM(TransactionEntry.SalesTax)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1155
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Profit"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Profit $"
+   VBDataType = vbCurrency
+   Formula = "SUM(((TransactionEntry.Price * TransactionEntry.Quantity) - (TransactionEntry.Cost * TransactionEntry.Quantity)) - TransactionEntry.SalesTax)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1100
+   GroupMethod = groupmethodSum
+   ColFormat = "$#,###.##"
+End Column
+
+Begin Column
+   FieldName = "ProfitMargin"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Margin %"
+   Formula = "CASE WHEN SUM(TransactionEntry.Price * TransactionEntry.Quantity - TransactionEntry.SalesTax) <> 0 THEN SUM((TransactionEntry.Price - TransactionEntry.Cost) * TransactionEntry.Quantity - TransactionEntry.SalesTax)/SUM(TransactionEntry.Price * TransactionEntry.Quantity - TransactionEntry.SalesTax) ELSE 0 END"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1100
+   GroupMethod = groupmethodNone
+   ColFormat = "##.##%"
+   ColAlignment = flexAlignRightCenter
+End Column
+
+Begin Column
+   FieldName = "QuantityOH"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Qty On Hand"
+   VBDataType = vbDouble
+   Formula = "MAX(ViewItems.Quantity)"
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1230
+   GroupMethod = groupmethodSum
+   ColFormat = "#,###"
+End Column
+
+Begin Column
+   FieldName = "InvCost"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Inv. Cost"
+   VBDataType = vbDouble
+   Formula = "MAX(ViewItems.InvCost)"
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1500
+   GroupMethod = groupmethodSum
+   ColFormat = "$#,###.##"
+End Column
+
+Begin Column
+   FieldName = "[Transaction].Time"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Date Sold"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = True
+   FilterDisabled = False
+   ColWidth = 900
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column

@@ -1,0 +1,635 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeCustomer
+   ReportTitle = "Customer List"
+   PageOrientation = pageorientationLandscape
+   OutLineMode = True
+   Groups = 0
+   GroupDescription = "Total"
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = ""
+   TablesQueried = "FROM Customer WITH(NOLOCK)"
+   SelCriteria = ""
+   GroupBy = ""
+   SortOrder = ""
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "As Of: <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+
+//--- Columns ---//
+
+Begin Column
+   FieldName = "Customer.AccountNumber"
+   DrillDownFieldName = "Customer.AccountNumber"
+   DrillDownReportName = ""
+   Title = "Account #"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1245
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Customer.FirstName"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "First Name"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1560
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Customer.LastName"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Last Name"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1560
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+ 
+Begin Column
+   FieldName = "Customer.Address"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Address"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1560
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column 
+ 
+Begin Column
+   FieldName = "Customer.City"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "City"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1560
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+ 
+Begin Column
+   FieldName = "Customer.State"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "State"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1560
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+ 
+Begin Column
+   FieldName = "Customer.Zip"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Zip"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1560
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Customer.Company"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Company"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1395
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Customer.PhoneNumber"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Phone #"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1365
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Customer.FaxNumber"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Fax #"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1110
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Customer.AccountOpened"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Opened"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 780
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Customer.LastVisit"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Last Visit"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 915
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Customer.TotalVisits"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Total Visits"
+   VBDataType = vbLong
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1065
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Customer.TotalSales"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Total Sales"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1185
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Customer.TotalSavings"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Savings"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1035
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "CurrentDiscount"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Discount"
+   VBDataType = vbDouble
+   Formula = "Customer.CurrentDiscount / 100"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 855
+   GroupMethod = groupmethodNone
+   ColFormat = "0.00%"
+End Column
+
+Begin Column
+   FieldName = "Customer.CreditLimit"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Credit Limit"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1110
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Customer.AccountBalance"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Balance"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1170
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "CustomerAvailable"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Available"
+   VBDataType = vbCurrency
+   Formula = "Customer.CreditLimit - Customer.AccountBalance"
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 915
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Customer.AccountTypeID"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "CH"
+   VBDataType = vbBoolean
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 465
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "CustomerPriceLevel"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Price Level"
+   VBDataType = vbString
+   Formula = "CASE Customer.PriceLevel WHEN 0 THEN 'Regular' WHEN 1 THEN 'Level A' WHEN 2 THEN 'Level B' WHEN 3 THEN 'Level C' END"
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1050
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Customer.TaxExempt"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Tax Exempt"
+   VBDataType = vbBoolean
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1080
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Customer.GlobalCustomer"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Global Customer"
+   VBDataType = vbBoolean
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1080
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Customer.CustomText1"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "!CaptionCustomerCustomText1"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1080
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Customer.CustomText2"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "!CaptionCustomerCustomText2"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1080
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Customer.CustomText3"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "!CaptionCustomerCustomText3"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1080
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Customer.CustomText4"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "!CaptionCustomerCustomText4"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1080
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Customer.CustomText5"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "!CaptionCustomerCustomText5"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1080
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Customer.CustomDate1"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "!CaptionCustomerCustomDate1"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1080
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Customer.CustomDate2"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "!CaptionCustomerCustomDate2"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1080
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Customer.CustomDate3"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "!CaptionCustomerCustomDate3"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1080
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Customer.CustomDate4"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "!CaptionCustomerCustomDate4"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1080
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Customer.CustomDate5"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "!CaptionCustomerCustomDate5"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1080
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Customer.CustomNumber1"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "!CaptionCustomerCustomNumber1"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1080
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Customer.CustomNumber2"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "!CaptionCustomerCustomNumber2"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1080
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Customer.CustomNumber3"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "!CaptionCustomerCustomNumber3"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1080
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Customer.CustomNumber4"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "!CaptionCustomerCustomNumber4"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1080
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Customer.CustomNumber5"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "!CaptionCustomerCustomNumber5"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1080
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column

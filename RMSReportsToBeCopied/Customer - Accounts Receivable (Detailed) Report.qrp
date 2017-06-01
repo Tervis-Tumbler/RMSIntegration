@@ -1,0 +1,254 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeCustomer
+   ReportTitle = "Accounts Receivable (Detailed) Report"
+   PageOrientation = pageorientationLandscape
+   ShowDateTimePicker = True
+   OutLineMode = True
+   Groups = 1
+   GroupDescription = "Balance"
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = "ListOpenAccountReceivables"
+   TablesQueried = "FROM #ListOpenAccountReceivables LEFT JOIN Customer ON #ListOpenAccountReceivables.CustomerID = Customer.ID LEFT JOIN AccountType ON Customer.AccountTypeID = AccountType.ID"
+   SelCriteria = ""
+   GroupBy = ""
+   SortOrder = ""
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "As Of: <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+Begin Filter
+   FieldName = "#ListOpenAccountReceivables.Balance"
+   FilterOp = reportfilteropNotEqual
+   FilterLoLim = "0.00"
+   FilterHilim = "0.00"
+End Filter
+
+
+//--- Columns ---//
+
+Begin Column
+   FieldName = "#ListOpenAccountReceivables.AccountNumber"
+   DrillDownFieldName = "Customer.AccountNumber"
+   DrillDownReportName = ""
+   Title = "Account #"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2250
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "#ListOpenAccountReceivables.Name"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Name"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1530
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "#ListOpenAccountReceivables.Company"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Company"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1530
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Type"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Type"
+   VBDataType = vbString
+   Formula = "CASE #ListOpenAccountReceivables.AccountReceivableType WHEN 0 THEN 'TR' WHEN 1 THEN 'FC' WHEN 2 THEN 'DC' END"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 550
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ReferenceNum"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Ref #"
+   VBDataType = vbLong
+   Formula = "CASE #ListOpenAccountReceivables.AccountReceivableType WHEN 0 THEN TransactionNumber WHEN 1 THEN AccountReceivableID WHEN 2 THEN AccountReceivableID END"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 800
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "#ListOpenAccountReceivables.Date"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Date"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 855
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "#ListOpenAccountReceivables.AccountReceivableID"
+   DrillDownFieldName = "AccountReceivable.ID"
+   DrillDownReportName = ""
+   Title = "ID"
+   VBDataType = vbLong
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 735
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Terms"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Terms"
+   VBDataType = vbString
+   Formula = "'Net' + str(GracePeriod,3)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 810
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "#ListOpenAccountReceivables.DueDate"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Due Date"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 885
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Aging"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Aging"
+   VBDataType = vbLong
+   Formula = "CASE WHEN #ListOpenAccountReceivables.Aging <=0 then 0 ELSE #ListOpenAccountReceivables.Aging END"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 650
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Bracket"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Bracket"
+   VBDataType = vbString
+   Formula = "CASE WHEN #ListOpenAccountReceivables.Aging <=0 THEN '<Current>' WHEN #ListOpenAccountReceivables.Aging <=30 THEN '<1- 30>'  WHEN #ListOpenAccountReceivables.Aging <=60 THEN '<31 - 60>'  WHEN #ListOpenAccountReceivables.Aging <=90 THEN '<61 - 90>' ELSE '<91+  > ' END"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 800
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "#ListOpenAccountReceivables.OriginalAmount"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Original Amt."
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1245
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "#ListOpenAccountReceivables.Balance"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Receivable Balance"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1750
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+

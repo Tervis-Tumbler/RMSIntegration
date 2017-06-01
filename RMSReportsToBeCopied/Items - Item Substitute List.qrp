@@ -1,0 +1,234 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeItems
+   ReportTitle = "Item Substitute List"
+   PageOrientation = pageorientationLandscape
+   OutLineMode = True
+   Groups = 1
+   GroupDescription = ""
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = ""
+   TablesQueried = "FROM Substitute WITH(NOLOCK) INNER JOIN Item WITH(NOLOCK) ON Substitute.ItemID = Item.ID INNER JOIN [Item] ItemSubs WITH(NOLOCK) ON Substitute.SubstituteItemID = ItemSubs.ID LEFT JOIN Department WITH(NOLOCK) ON Item.DepartmentID = Department.ID LEFT JOIN Category WITH(NOLOCK) ON Item.CategoryID = Category.ID LEFT JOIN Supplier WITH(NOLOCK) ON Item.SupplierID = Supplier.ID LEFT JOIN [Department] DepartmentSubs WITH(NOLOCK) ON ItemSubs.DepartmentID = DepartmentSubs.ID LEFT JOIN [Category] CategorySubs WITH(NOLOCK) ON ItemSubs.CategoryID = CategorySubs.ID"
+   SelCriteria = ""
+   GroupBy = ""
+   SortOrder = ""
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "Generated On <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+Begin Filter
+   FieldName = "Item.Inactive"
+   FilterOp = reportfilteropEqual
+   FilterLoLim = "0"
+   FilterHilim = "0"
+End Filter
+
+
+
+//--- Columns ---//
+
+Begin Column
+   FieldName = "Item.ItemLookupCode"
+   DrillDownFieldName = "Item.ItemLookupCode"
+   DrillDownReportName = ""
+   Title = "Item"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1665
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Item.Description"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Description"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1920
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Department.Name"
+   DrillDownFieldName = "Department.Name"
+   DrillDownReportName = ""
+   Title = "Department"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1665
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Category.Name"
+   DrillDownFieldName = "Category.Name"
+   DrillDownReportName = ""
+   Title = "Category"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1770
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Supplier.SupplierName"
+   DrillDownFieldName = "Supplier.SupplierName"
+   DrillDownReportName = ""
+   Title = "Supplier"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 825
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Item.BinLocation"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Bin Location"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1140
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "ItemSubs.ItemLookupCode"
+   DrillDownFieldName = "Item.ItemLookupCode"
+   DrillDownReportName = ""
+   Title = "S. Item"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1560
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "ItemSubs.Description"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "S. Description"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2130
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "DepartmentSubs.Name"
+   DrillDownFieldName = "Department.Name"
+   DrillDownReportName = ""
+   Title = "S. Department"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1860
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "CategorySubs.Name"
+   DrillDownFieldName = "Category.Name"
+   DrillDownReportName = ""
+   Title = "S. Category"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1530
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+
+Begin Column
+   FieldName = "Item.Inactive"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Inactive"
+   VBDataType = vbBoolean
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1057
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignCenterCenter
+End Column

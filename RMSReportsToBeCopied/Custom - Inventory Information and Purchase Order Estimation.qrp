@@ -1,0 +1,630 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeItems
+   ReportTitle = "Inventory Information and Purchase Order Estimation"
+   PageOrientation = pageorientationLandscape
+   WordWrap = False
+   ShowDateTimePicker = False
+   OutLineMode = True
+   Groups = 1
+   GroupDescription = ""
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = ""
+   PreQuery1 = <BEGIN>
+IF EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.VIEWS WHERE TABLE_NAME = 'ViewOnOrder') DROP VIEW ViewOnOrder
+IF EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.VIEWS WHERE TABLE_NAME = 'ViewOnXfrIn') DROP VIEW ViewOnXfrIn
+IF EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.VIEWS WHERE TABLE_NAME = 'ViewOnXfrOut') DROP VIEW ViewOnXfrOut
+<END>
+   PreQuery2 = <BEGIN>
+     	CREATE VIEW ViewOnOrder AS 
+         SELECT ItemID, 
+	  SUM(QuantityOrdered - QuantityReceivedToDate) AS OnOrder
+ 
+         FROM PurchaseOrderEntry 
+          LEFT JOIN PurchaseOrder on PurchaseOrderEntry.PurchaseOrderID = PurchaseOrder.ID 
+
+         WHERE POType IN (0,1) AND PurchaseOrder.Status < 2
+
+         GROUP BY ItemID
+
+	[GO]
+
+     	CREATE VIEW ViewOnXfrIn AS 
+         SELECT ItemID, 
+	  SUM(QuantityOrdered - QuantityReceivedToDate) AS XfrIn
+ 
+         FROM PurchaseOrderEntry 
+          LEFT JOIN PurchaseOrder on PurchaseOrderEntry.PurchaseOrderID = PurchaseOrder.ID 
+
+         WHERE POType IN (2,4) AND PurchaseOrder.Status < 2
+
+         GROUP BY ItemID
+
+	[GO]
+
+     	CREATE VIEW ViewOnXfrOut AS 
+         SELECT ItemID, 
+	  SUM(QuantityOrdered - QuantityReceivedToDate) AS XfrOut
+ 
+         FROM PurchaseOrderEntry 
+          LEFT JOIN PurchaseOrder on PurchaseOrderEntry.PurchaseOrderID = PurchaseOrder.ID 
+
+         WHERE POType IN (3,5) AND PurchaseOrder.Status < 2
+
+         GROUP BY ItemID
+
+     	<END>
+   TablesQueried = <BEGIN>
+	FROM Item WITH(NOLOCK) 
+	LEFT JOIN Department WITH(NOLOCK) ON Item.DepartmentID = Department.ID 
+	LEFT JOIN Category WITH(NOLOCK) ON Item.CategoryID = Category.ID 
+	LEFT JOIN Supplier WITH(NOLOCK) ON Item.SupplierID = Supplier.ID 
+	LEFT JOIN SupplierList ON Supplier.ID = SupplierList.SupplierID AND Item.ID = SupplierList.ItemID 
+	LEFT JOIN ViewOnOrder ON Item.ID = ViewOnOrder.ItemID
+	LEFT JOIN ViewOnXfrOut ON Item.ID = ViewOnXfrOut.ItemID
+	LEFT JOIN ViewOnXfrIn ON Item.ID = ViewOnXfrIn.ItemID
+	<END>
+   SelCriteria = ""
+   GroupBy = ""
+   SortOrder = ""
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "Generated On <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+Begin Filter
+   FieldName = "Item.Inactive"
+   FilterOp = reportfilteropEqual
+   FilterLoLim = "0"
+   FilterHilim = "0"
+   FilterNegated = False
+   FilterConnector = reportfilterbooleanconAND
+End Filter
+
+Begin Filter
+   FieldName = "Item.DoNotOrder"
+   FilterOp = reportfilteropEqual
+   FilterLoLim = "0"
+   FilterHilim = "0"
+   FilterNegated = False
+   FilterConnector = reportfilterbooleanconAND
+End Filter
+
+
+//--- Columns ---//
+
+Begin Column
+   FieldName = "Supplier.SupplierName"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Supplier"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1872
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Item.ItemLookupCode"
+   DrillDownFieldName = "Item.ItemLookupCode"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Item Lookup Code"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1668
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Item.Description"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Description"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2844
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "SupplierList.ReorderNumber"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Reorder No."
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1296
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Item.Quantity"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "On-Hand"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 900
+   GroupMethod = groupmethodSum
+   ColFormat = "#.##"
+End Column
+
+Begin Column
+   FieldName = "Item.QuantityCommitted"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Committed"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1068
+   GroupMethod = groupmethodSum
+   ColFormat = "#.##"
+End Column
+
+Begin Column
+   FieldName = "ViewOnOrderOnOrder"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "On Order"
+   VBDataType = vbDouble
+   Formula = "CASE WHEN ViewOnOrder.OnOrder IS NULL THEN 0 ELSE ViewOnOrder.OnOrder END"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 948
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "XfrIn"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Xfr In"
+   VBDataType = vbDouble
+   Formula = "CASE WHEN ViewOnXfrIn.XfrIn IS NULL THEN 0 ELSE ViewOnXfrIn.XfrIn END"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 612
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "XfrOut"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Xfr Out"
+   VBDataType = vbDouble
+   Formula = "CASE WHEN ViewOnXfrOut.XfrOut IS NULL THEN 0 ELSE ViewOnXfrOut.XfrOut END"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 756
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.ReorderPoint"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Reorder Pt."
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1128
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.RestockLevel"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Restock Lvl."
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "QuantityToOrder"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Qty to Order"
+   VBDataType = vbDouble
+   Formula = "CASE WHEN Item.Quantity - Item.QuantityCommitted <= Item.ReorderPoint THEN CASE WHEN Item.RestockLevel - Item.Quantity + Item.QuantityCommitted - (CASE WHEN ViewOnOrder.OnOrder IS NULL THEN 0 ELSE ViewOnOrder.OnOrder END)  < 0 THEN 0 ELSE Item.RestockLevel - Item.Quantity + Item.QuantityCommitted - (CASE WHEN ViewOnOrder.OnOrder IS NULL THEN 0 ELSE ViewOnOrder.OnOrder END) END ELSE 0 END"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodSum
+   ColFormat = "#.##"
+End Column
+
+Begin Column
+   FieldName = "Department.Name"
+   DrillDownFieldName = "Department.Name"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Department"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2064
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Category.Name"
+   DrillDownFieldName = "Category.Name"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Category"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1296
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Item.DoNotOrder"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Do Not Order?"
+   VBDataType = vbBoolean
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 996
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Item.BinLocation"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Bin Location"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1140
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Item.MSRP"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "MSRP"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 948
+   GroupMethod = groupmethodAverage
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "SupplierList.MasterPackQuantity"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "MPQ"
+   VBDataType = vbLong
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 696
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "QuantityToOrderMPQ"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Qty to Order (MPQ)"
+   VBDataType = vbDouble
+   Formula = "CASE WHEN Item.Quantity - Item.QuantityCommitted <= Item.ReorderPoint AND SupplierList.MasterPackQuantity > 0 THEN CEILING ((Item.RestockLevel - Item.Quantity + Item.QuantityCommitted) / SupplierList.MasterPackQuantity) * SupplierList.MasterPackQuantity WHEN Item.Quantity - Item.QuantityCommitted <= Item.ReorderPoint THEN Item.RestockLevel - Item.Quantity + Item.QuantityCommitted ELSE 0 END"
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1212
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.Cost"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Cost"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 528
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.Price"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Price"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 552
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.PriceA"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Price A"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 720
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.PriceB"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Price B"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 660
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.PriceC"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Price C"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 720
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.PriceLowerBound"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Lo Bound"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 912
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.PriceUpperBound"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Hi Bound"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 852
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.SalePrice"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Sale Price"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 948
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.SaleStartDate"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Sale Starts"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1020
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.SaleEndDate"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Sale Ends"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 936
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.LastSold"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Last Sold"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 900
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.Inactive"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Inactive"
+   VBDataType = vbBoolean
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1056
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignCenterCenter
+End Column
+

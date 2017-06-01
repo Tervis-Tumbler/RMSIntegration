@@ -1,0 +1,336 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeItems
+   ReportTitle = "Item Movement History Report"
+   PageOrientation = pageorientationLandscape
+   ShowDateTimePicker = False
+   OutLineMode = True
+   Groups = 1
+   GroupDescription = ""
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = ""
+   PreQuery1 = "IF EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.VIEWS WHERE TABLE_NAME = 'ViewItemMovementHistory') DROP VIEW ViewItemMovementHistory"
+   PreQuery2 = <BEGIN>
+   
+      CREATE VIEW ViewItemMovementHistory AS
+      SELECT Department.Name as DepartmentName,
+      		 Category.Name as CategoryName,
+      		 Item.ItemLookupCode AS ItemLookupCode,
+             Item.Description AS ItemDescription,
+             Serial.SerialNumber AS SerialNumber,
+             Serial.SerialNumber2 AS SerialNumber2,
+             Serial.SerialNumber3 AS SerialNumber3,
+             Cashier.Name AS CashierName,
+             InventoryTransferLog.ReferenceID AS ReferenceID,
+             InventoryTransferLog.ReferenceEntryID AS ReferenceEntryID,
+             InventoryTransferLog.Type AS Type,
+             ReasonCode.Description AS ReasonCodeDescription,
+             InventoryTransferLog.Quantity AS Quantity,
+             InventoryTransferLog.DateTransferred AS DateTransferred,
+             PurchaseOrder.PONumber AS PONumber,
+             CASE InventoryTransferlog.Type WHEN 2 THEN InventoryTransferLog.ReferenceID ELSE NULL END AS TransactionNumber
+             
+      FROM InventoryTransferLog 
+      		 LEFT JOIN Item ON InventoryTransferLog.ItemID = Item.ID
+      		 LEFT JOIN Department ON Item.DepartmentID = Department.ID LEFT JOIN Category ON Item.CategoryID = Category.ID
+             LEFT JOIN Serial ON InventoryTransferLog.DetailID = Serial.ID
+             LEFT JOIN Cashier ON InventoryTransferLog.CashierID = Cashier.ID
+             LEFT JOIN ReasonCode ON InventoryTransferLog.ReasonCodeID = ReasonCode.ID
+             LEFT JOIN PurchaseOrder ON InventoryTransferLog.ReferenceID = PurchaseOrder.ID AND
+               (InventoryTransferLog.Type = 1 OR InventoryTransferLog.Type = 3)
+               
+      UNION ALL           
+
+      SELECT Department.Name as DepartmentName,
+      		 Category.Name as CategoryName,
+      		 Item.ItemLookupCode AS ItemLookupCode,
+             Item.Description AS ItemDescription,
+             Serial.SerialNumber AS SerialNumber,
+             Serial.SerialNumber2 AS SerialNumber2,
+             Serial.SerialNumber3 AS SerialNumber3,
+             Cashier.Name AS CashierName,
+             TransactionEntry.TransactionNumber AS ReferenceID,
+             TransactionEntry.ID AS ReferenceEntryID,
+             99 AS Type,
+             ReasonCode.Description AS ReasonCodeDescription,
+             - TransactionEntry.Quantity AS Quantity,
+             [Transaction].Time AS DateTransferred,
+             '' AS PONumber,
+             [Transaction].TransactionNumber AS TransactionNumber
+             
+      FROM TransactionEntry 
+      		 LEFT JOIN Item ON TransactionEntry.ItemID = Item.ID
+      		 LEFT JOIN Department ON Item.DepartmentID = Department.ID LEFT JOIN Category ON Item.CategoryID = Category.ID
+             LEFT JOIN [Transaction] ON TransactionEntry.TransactionNumber = [Transaction].TransactionNumber
+             LEFT JOIN Serial ON TransactionEntry.DetailID = Serial.ID
+             LEFT JOIN Cashier ON [Transaction].CashierID = Cashier.ID
+             LEFT JOIN ReasonCode ON TransactionEntry.ReturnReasonCodeID = ReasonCode.ID
+
+
+<END>
+   TablesQueried = "FROM ViewItemMovementHistory"
+   SelCriteria = ""
+   GroupBy = ""
+   SortOrder = "DateTransferred"
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "Generated On <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+Begin Filter
+   FieldName = "ViewItemMovementHistory.DateTransferred"
+   FilterOp = reportfilteropGreaterEqual
+   FilterLoLim = "<MonthStart>"
+   FilterHilim = "<MonthStart>"
+End Filter
+
+
+//--- Columns ---//
+
+Begin Column
+   FieldName = "ViewItemMovementHistory.DepartmentName"
+   DrillDownFieldName = "Department.Name"
+   DrillDownReportName = ""
+   Title = "Department"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2205
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "ViewItemMovementHistory.CategoryName"
+   DrillDownFieldName = "Category.Name"
+   DrillDownReportName = ""
+   Title = "Category"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1065
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "ViewItemMovementHistory.ItemLookupCode"
+   DrillDownFieldName = "Item.ItemLookupCode"
+   DrillDownReportName = ""
+   Title = "Item Lookup Code"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2160
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "ViewItemMovementHistory.ItemDescription"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Description"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1830
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "ViewItemMovementHistory.SerialNumber"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Serial Number"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1605
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "ViewItemMovementHistory.SerialNumber2"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Serial Number 2"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1830
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "ViewItemMovementHistory.SerialNumber3"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Serial Number 3"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1830
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Type"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Type"
+   VBDataType = vbString
+   Formula = "CASE Type WHEN 1 THEN 'PO/Inventory Transfer' WHEN 2 THEN 'Return to Off-Line' WHEN 3 THEN 'Transfer Out' WHEN 4 THEN 'Main/Off-Line' WHEN 5 THEN 'Manual Adjustment' WHEN 6 THEN 'QuickAssist' WHEN 7 THEN 'Physical Inventory Adjustment' WHEN 8 THEN 'HQ Adjustment' WHEN 9 THEN 'Parent Child Adjustment' WHEN 10 THEN 'Kit Component Transfer' WHEN 99 THEN 'Sales/Return' ELSE 'Unknown' END "
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1890
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewItemMovementHistory.ReasonCodeDescription"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "ReasonCode"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1830
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "ViewItemMovementHistory.Quantity"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Quantity"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1080
+   GroupMethod = groupmethodSum
+   ColFormat = "#.##"
+End Column
+
+Begin Column
+   FieldName = "ViewItemMovementHistory.DateTransferred"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Date"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1020
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewItemMovementHistory.PONumber"
+   DrillDownFieldName = "PurchaseOrder.PONumber"
+   DrillDownReportName = ""
+   Title = "PO #"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1140
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewItemMovementHistory.TransactionNumber"
+   DrillDownFieldName = "[Transaction].TransactionNumber"
+   DrillDownReportName = ""
+   Title = "Transaction"
+   VBDataType = vbLong
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1140
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewItemMovementHistory.CashierName"
+   DrillDownFieldName = "Cashier.Name"
+   DrillDownReportName = ""
+   Title = "Cashier"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+

@@ -1,0 +1,474 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeSales
+   ReportTitle = "Tender Summary by Cashier"
+   PageOrientation = pageorientationPortrait
+   WordWrap = True
+   ShowDateTimePicker = False
+   OutLineMode = True
+   Groups = 2
+   GroupDescription = ""
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = ""
+   PreQuery1 = "IF EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.VIEWS WHERE TABLE_NAME = 'VIEWTenders') DROP VIEW VIEWTenders"
+   PreQuery2 = <BEGIN>
+
+CREATE VIEW VIEWTenders AS
+
+SELECT Register.Description AS RegDesc, 
+ Register.Number AS Register, 
+ Cashier.Name, 
+ Cashier.Number, 
+ TenderEntry.Description, 
+ [Transaction].CustomerID, 
+ CONVERT(datetime, CONVERT(nvarchar, [Transaction].Time, 101), 101) as Date,
+ [Transaction].Time as Time, 
+ [Transaction].TransactionNumber, 
+ NULL AS OtherNumber,
+ TenderEntry.Amount, 
+ CASE WHEN RecallType = 1 THEN 'Return' ELSE CASE WHEN RecallType = 3 THEN 'Void' ELSE 'Sale' END END as TrxType 
+
+FROM TenderEntry 
+ LEFT JOIN [Transaction] ON TenderEntry.TransactionNumber = [Transaction].TransactionNumber 
+ LEFT JOIN Batch ON [Transaction].BatchNumber = Batch.BatchNumber 
+ LEFT JOIN Register ON Batch.RegisterID = Register.ID 
+ LEFT JOIN Cashier ON [Transaction].CashierID = Cashier.ID
+
+
+WHERE Register.Number IS not null
+
+
+UNION
+
+
+
+SELECT 
+ Register.Description AS RegDesc, 
+ Register.Number AS Register,  
+ Cashier.Name, 
+ Cashier.Number, 
+ TenderEntry.Description, 
+ Payment.CustomerID,
+ CONVERT(datetime, CONVERT(nvarchar, Payment.Time, 101), 101) as Date,
+ Payment.Time as Time, 
+ NULL as TransactionNumber,
+ Payment.ID as OtherNumber,
+ TendErentry.Amount, 
+ 'Payment' as TrxType 
+
+FROM TenderEntry 
+
+ LEFT JOIN Payment ON Payment.ID = Tenderentry.PaymentID
+ LEFT JOIN Batch ON Payment.BatchNumber = Batch.BatchNumber 
+ LEFT JOIN Register ON Batch.RegisterID = Register.ID 
+ LEFT JOIN Cashier ON Payment.CashierID = Cashier.ID
+
+WHERE Register.Number IS NOT NULL
+
+
+
+UNION
+
+SELECT Register.Description AS RegDesc,
+ Register.Number AS Register,  
+ Cashier.Name,
+ Cashier.Number,
+ TenderEntry.Description,
+ 0 as CustomerID,
+ CONVERT(datetime, CONVERT(nvarchar, DropPayout.Time, 101), 101) as Date,
+ DropPayout.Time as Time,
+ NULL as TransactionNumber,
+ DropPayout.ID as OtherNumber,
+ TenderEntry.Amount, 
+ 'Drop/Payout' as TrxType  
+
+FROM TenderEntry 
+
+ LEFT JOIN DropPayout ON DropPayout.ID = TenderEntry.DropPayoutID
+ LEFT JOIN Batch ON DropPayout.BatchNumber = Batch.BatchNumber 
+ LEFT JOIN Register ON Batch.RegisterID = Register.ID 
+ LEFT JOIN Cashier ON DropPayout.CashierID = Cashier.ID
+
+WHERE Register.Number IS NOT NULL
+
+
+
+UNION
+
+SELECT Register.Description AS RegDesc,
+ Register.Number AS Register,  
+ Cashier.Name,
+ Cashier.Number,
+ TenderEntry.Description,
+ [Order].CustomerID,
+ CONVERT(datetime, CONVERT(nvarchar, OrderHistory.Date, 101), 101) AS Date,
+ OrderHistory.Date as Time,
+ NULL as TransactionNumber,
+ OrderHistory.OrderID as OtherNumber,
+ TenderEntry.Amount, 
+ CASE WHEN Type = 2 THEN 'Work Order' ELSE CASE WHEN Type = 5 THEN 'Layaway' ELSE 'Back Order' END END as TrxType 
+
+FROM TenderEntry 
+
+ LEFT JOIN OrderHistory ON OrderHistory.ID = TenderEntry.OrderHistoryID
+ LEFT JOIN [Order] ON OrderHistory.OrderID = [Order].ID
+ LEFT JOIN Batch ON OrderHistory.BatchNumber = Batch.BatchNumber 
+ LEFT JOIN Register ON Batch.RegisterID = Register.ID 
+ LEFT JOIN Cashier ON OrderHistory.CashierID = Cashier.ID
+
+WHERE OrderHistory.TransactionNumber = 0
+<END>
+   TablesQueried = "FROM VIEWTenders LEFT JOIN Customer ON ViewTenders.CustomerID = Customer.ID"
+   SelCriteria = ""
+   GroupBy = ""
+   SortOrder = "VIEWTenders.Time, VIEWTenders.Amount DESC"
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "Generated On <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+Begin Filter
+   FieldName = "ViewTenders.Date"
+   FilterOp = reportfilteropBetween
+   FilterLoLim = "<Today>"
+   FilterHilim = "<Today>"
+End Filter
+
+
+//--- Columns ---//
+
+Begin Column
+   FieldName = "VIEWTenders.Register"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Register #"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1020
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column
+
+Begin Column
+   FieldName = "VIEWTenders.Name"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Cashier Name"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1335
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column
+
+Begin Column
+   FieldName = "VIEWTenders.Number"
+   DrillDownFieldName = "Cashier.Number"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Cashier #"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 960
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column
+
+Begin Column
+   FieldName = "VIEWTenders.Description"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Tender"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1395
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column
+
+Begin Column
+   FieldName = "ViewTenders.Date"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Date"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 900
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column
+
+Begin Column
+   FieldName = "VIEWTenders.Time"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Time Sold"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 900
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "VIEWTenders.TransactionNumber"
+   DrillDownFieldName = "[Transaction].TransactionNumber"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Trx #"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 840
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column
+
+Begin Column
+   FieldName = "VIEWTenders.OtherNumber"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Other #"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 840
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column
+
+Begin Column
+   FieldName = "Customer.AccountNumber"
+   DrillDownFieldName = "Customer.AccountNumber"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Customer #"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1100
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column
+
+
+Begin Column
+   FieldName = "CustomerName"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Customer Name"
+   VBDataType = vbString
+   Formula = "Customer.LastName + ', ' + Customer.FirstName"
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = True
+   ColWidth = 840
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column
+
+Begin Column
+   FieldName = "VIEWTenders.Amount"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Amount"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 900
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column
+
+Begin Column
+   FieldName = "VIEWTenders.TrxType"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Trx Type"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "VIEWTenders.Amount"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Max Amount"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1215
+   GroupMethod = groupmethodMax
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column
+
+Begin Column
+   FieldName = "VIEWTenders.Amount"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Min Amount"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1185
+   GroupMethod = groupmethodMin
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column
+
+Begin Column
+   FieldName = "VIEWTenders.Amount"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Avg Amount"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodAverage
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column
+
+Begin Column
+   FieldName = "VIEWTenders.RegDesc"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Reg. Descrptn."
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1380
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column
+
+
+Begin Column
+   FieldName = "Customer.FirstName"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Customer First Name"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = True
+   FilterDisabled = False
+   ColWidth = 840
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column
+
+Begin Column
+   FieldName = "Customer.LastName"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Customer Last Name"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = True
+   FilterDisabled = False
+   ColWidth = 840
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column
+

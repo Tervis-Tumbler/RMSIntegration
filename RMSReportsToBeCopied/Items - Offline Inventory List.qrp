@@ -1,0 +1,207 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeItems
+   ReportTitle = "Offline Inventory List"
+   PageOrientation = pageorientationPortrait
+   OutLineMode = True
+   Groups = 1
+   GroupDescription = ""
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = ""
+   TablesQueried = "FROM (((InventoryOffline LEFT JOIN Item ON InventoryOffline.ItemID = Item.ID) LEFT JOIN Serial ON InventoryOffline.DetailID = Serial.ID) LEFT JOIN ReasonCode ON InventoryOffline.ReasonCodeID = ReasonCode.ID) LEFT JOIN PurchaseOrder ON InventoryOffline.PurchaseOrderID = PurchaseOrder.ID"
+   SelCriteria = ""
+   GroupBy = ""
+   SortOrder = "Item.ItemLookUpCode"
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "Generated On <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+
+//--- Columns ---//
+
+
+Begin Column
+   FieldName = "Item.ItemLookupCode"
+   DrillDownFieldName = "Item.ItemLookupCode"
+   DrillDownReportName = ""
+   Title = "Item Lookup Code"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1800
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Item.Description"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Description"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2680
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Serial.SerialNumber"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Serial Number 1"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1400
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Serial.SerialNumber2"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Serial Number 2"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1400
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Serial.SerialNumber3"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Serial Number 3"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1400
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "InventoryOffline.Quantity"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Quantity"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1140
+   GroupMethod = groupmethodSum
+   ColFormat = "#.##"
+End Column
+
+Begin Column
+   FieldName = "ReasonCode.Description"
+   DrillDownFieldName = "ReasonCode.Description"
+   DrillDownReportName = ""
+   Title = "Reason Code"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1440
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "PurchaseOrder.PONumber"
+   DrillDownFieldName = "PurchaseOrder.PONumber"
+   DrillDownReportName = ""
+   Title = "Transfer #"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1280
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "InventoryOffline.Comment"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Comment"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2000
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "InventoryOffline.Date"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Date"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2000
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column

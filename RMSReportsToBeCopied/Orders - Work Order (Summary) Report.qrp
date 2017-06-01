@@ -1,0 +1,260 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeOrders
+   ReportTitle = "Work Order (Summary) Report"
+   PageOrientation = pageorientationPortrait
+   OutLineMode = True
+   Groups = 0
+   GroupDescription = ""
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = ""
+   TablesQueried = "FROM [Order] WITH(NOLOCK) LEFT JOIN Customer WITH(NOLOCK) ON [Order].CustomerID = Customer.ID "
+   SelCriteria = "[Order].Type = 2"
+   GroupBy = ""
+   SortOrder = ""
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "Generated On <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+Begin Filter
+   FieldName = "Status"
+   FilterOp = reportfilteropEqual
+   FilterLoLim = "Open"
+   FilterHilim = "Open"
+End Filter
+
+
+//--- Columns ---//
+
+Begin Column
+   FieldName = "[Order].ID"
+   DrillDownFieldName = "[Order].ID"
+   DrillDownReportName = "Orders - Work Order (Detailed) Report.qrp"
+   Title = "Order #"
+   VBDataType = vbLong
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 870
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Status"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Status"
+   VBDataType = vbString
+   Formula = "CASE [Order].Closed WHEN 0 THEN 'Open' ELSE 'Closed' END"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 810
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "[Order].Comment"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Comment"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1455
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "[Order].Time"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Date"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 825
+   GroupMethod = groupmethodNone
+   ColFormat = "ddddd"
+   ColAlignment = flexAlignRightCenter
+End Column
+
+Begin Column
+   FieldName = "Customer.AccountNumber"
+   DrillDownFieldName = "Customer.AccountNumber"
+   DrillDownReportName = ""
+   Title = "Cust. Acct. #"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1245
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "CustomerName"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Customer Name"
+   VBDataType = vbString
+   Formula = "Customer.LastName + ', ' + Customer.FirstName"
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1905
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "[Order].ExpirationOrDueDate"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Due Date"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 960
+   GroupMethod = groupmethodNone
+   ColFormat = "ddddd"
+   ColAlignment = flexAlignRightCenter
+End Column
+
+Begin Column
+   FieldName = "SubTotal"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Sub-Total"
+   VBDataType = vbCurrency
+   Formula = "[Order].Total - [Order].Tax - [Order].ShippingChargeOnOrder"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1110
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "[Order].Tax"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Tax"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 960
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "[Order].ShippingChargeOnOrder"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Shipping"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 960
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "[Order].Total"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Order Total"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1185
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "[Order].Deposit"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Deposit"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1050
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "[Order].ReferenceNumber"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Reference #"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1275
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+

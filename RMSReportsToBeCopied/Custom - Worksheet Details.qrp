@@ -1,0 +1,741 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeCustom
+   ReportTitle = "Price Management - Worksheet Details"
+   PageOrientation = pageorientationLandscape
+   OutLineMode = True
+   Groups = 1
+   GroupDescription = ""
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = ""
+   PreQuery1 = "IF EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.VIEWS WHERE TABLE_NAME = 'ViewWorksheet') DROP VIEW ViewWorksheet"
+   PreQuery2 = <BEGIN>  
+CREATE VIEW ViewWorksheet AS Select RRWS.ID,HQWS.HQ250,HQWS.HQ302,HQWS.HQ304,HQWS.HQ305,HQWS.HQ306,RRWS.Name,RRWS.LastUpdatedBy,HQUser.Account,
+HQUser.UserName, RRWS.LastUpdated,CASE RRWS.Status WHEN 1 THEN 'Committed' ELSE 'In Process' END As Status,
+Entry.ItemID,Item.ItemLookupCode,Item.Description,Item.ExtendedDescription,
+CASE Item.ItemType WHEN 1 THEN 'S/N' WHEN 3 THEN 'K' WHEN 5 THEN 'G' WHEN 6 THEN 'W' WHEN 7 THEN 'NI' WHEN 9 THEN 'V' END  As ItemType, Item.Subdescription1,Entry.NewSubdescription1,Item.Subdescription2,Entry.NewSubdescription2,
+Item.Subdescription3,Entry.NewSubdescription3,Item.Price,Entry.NewPrice,Item.PriceA,Entry.NewPriceA,
+Item.PriceB,Entry.NewPriceB,Item.PriceC,Entry.NewPriceC,Item.Cost,Entry.NewCost,
+Item.ReplacementCost,Entry.NewReplacementCost,Item.MSRP,Entry.NewMSRP,
+Item.PriceLowerBound,Entry.NewPriceLowerBound,Item.PriceUpperBound,Entry.NewPriceUpperBound,
+CASE WHEN Item.SupplierID = SupplierList.SupplierID THEN 1 Else 0 END As [Primary], 
+SupplierList.ReorderNumber,SupplierList.Cost As SupplierCost,Entry.NewSupplierCost,Entry.SupplierID,Supplier.Code As SupplierCode,
+Supplier.SupplierName,Supplier.ContactName,Supplier.AccountNumber,
+CASE WHEN ISNULL(Item.Cost,0) = 0 THEN NULL ELSE (Item.Price-Item.Cost)*100/Item.Cost End As CostM, 
+CASE WHEN ISNULL(Entry.NewCost,0) = 0 THEN NULL ELSE (Entry.NewPrice-Entry.NewCost)*100/Entry.NewCost End As NewCostM, 
+CASE WHEN ISNULL(Item.Price,0) = 0 THEN NULL ELSE (Item.Price-Item.Cost)*100/Item.Price End As PriceM, 
+CASE WHEN ISNULL(Entry.NewPrice,0) = 0 THEN NULL ELSE (Entry.NewPrice-Entry.NewCost)*100/Entry.NewPrice End As NewPriceM, 
+CASE WHEN ISNULL(SupplierList.Cost,0) = 0 THEN NULL ELSE (Item.Price-SupplierList.Cost)*100/SupplierList.Cost End As CostMS, 
+CASE WHEN ISNULL(Entry.NewSupplierCost,0) = 0 THEN NULL ELSE (Entry.NewPrice-Entry.NewSupplierCost)*100/Entry.NewSupplierCost End As NewCostMS, 
+CASE WHEN ISNULL(Item.Price,0) = 0 THEN NULL ELSE (Item.Price-SupplierList.Cost)*100/Item.Price End As PriceMS, 
+CASE WHEN ISNULL(Entry.NewPrice,0) = 0 THEN NULL ELSE (Entry.NewPrice-Entry.NewSupplierCost)*100/Entry.NewPrice End As NewPriceMS 
+From RRHQMiscellaneous_WorkSheet As RRWS 
+Left Join (Select WorksheetID,Max(CASE Style WHEN 250 THEN HQWorksheetID END) As HQ250,Max(CASE Style WHEN 302 THEN HQWorksheetID END) As HQ302,Max(CASE Style WHEN 304 THEN HQWorksheetID END) As HQ304,Max(CASE Style WHEN 305 THEN HQWorksheetID END) As HQ305,Max(CASE Style WHEN 306 THEN HQWorksheetID END) As HQ306 From RRHQMiscellaneous_Reference 
+Left Join Worksheet On Worksheet.ID = RRHQMiscellaneous_Reference.HQWorksheetID Group By RRHQMiscellaneous_Reference.WorkSheetID) As HQWS On HQWS.WorksheetID = RRWS.ID 
+Left Join HQUser On HQUser.ID = RRWS.LastUpdatedBy
+Left Join RRHQMiscellaneous_WorkSheetEntry As Entry On Entry.WorksheetID = RRWS.ID
+Left Join Item On Item.ID = Entry.ItemID 
+Left Join SupplierList On SupplierList.ItemID = Entry.ItemID AND SupplierList.SupplierID = Entry.SupplierID  
+Left Join Supplier On SupplierList.SupplierID = Supplier.ID 
+Where RRWS.Status = 0
+Union All 
+Select RRWS.ID,HQWS.HQ250,HQWS.HQ302,HQWS.HQ304,HQWS.HQ305,HQWS.HQ306,RRWS.Name,RRWS.LastUpdatedBy,HQUser.Account,HQUser.UserName, RRWS.LastUpdated,CASE RRWS.Status WHEN 1 THEN 'Committed' ELSE 'In Process' END As Status,
+Entry.ItemID,Item.ItemLookupCode,Item.Description,Item.ExtendedDescription,
+CASE Item.ItemType WHEN 1 THEN 'S/N' WHEN 3 THEN 'K' WHEN 5 THEN 'G' WHEN 6 THEN 'W' WHEN 7 THEN 'NI' WHEN 9 THEN 'V' END  As ItemType, 
+Entry.Subdescription1,Entry.NewSubdescription1,Entry.Subdescription2,Entry.NewSubdescription2,
+Entry.Subdescription3,Entry.NewSubdescription3,Entry.Price,Entry.NewPrice,Entry.PriceA,Entry.NewPriceA,
+Entry.PriceB,Entry.NewPriceB,Entry.PriceC,Entry.NewPriceC,Entry.Cost,Entry.NewCost,
+Entry.ReplacementCost,Entry.NewReplacementCost,Entry.MSRP,Entry.NewMSRP,
+Entry.PriceLowerBound,Entry.NewPriceLowerBound,Entry.PriceUpperBound,Entry.NewPriceUpperBound,
+CASE WHEN Item.SupplierID = SupplierList.SupplierID THEN 1 Else 0 END As [Primary], 
+SupplierList.ReorderNumber,Entry.SupplierCost,Entry.NewSupplierCost,Entry.SupplierID,Supplier.Code As SupplierCode,
+Supplier.SupplierName,Supplier.ContactName,Supplier.AccountNumber,
+CASE WHEN ISNULL(Item.Cost,0) = 0 THEN NULL ELSE (Item.Price-Item.Cost)*100/Item.Cost End As CostM, 
+CASE WHEN ISNULL(Entry.NewCost,0) = 0 THEN NULL ELSE (Entry.NewPrice-Entry.NewCost)*100/Entry.NewCost End As NewCostM, 
+CASE WHEN ISNULL(Item.Price,0) = 0 THEN NULL ELSE (Item.Price-Item.Cost)*100/Item.Price End As PriceM, 
+CASE WHEN ISNULL(Entry.NewPrice,0) = 0 THEN NULL ELSE (Entry.NewPrice-Entry.NewCost)*100/Entry.NewPrice End As NewPriceM, 
+CASE WHEN ISNULL(SupplierList.Cost,0) = 0 THEN NULL ELSE (Item.Price-SupplierList.Cost)*100/SupplierList.Cost End As CostMS, 
+CASE WHEN ISNULL(Entry.NewSupplierCost,0) = 0 THEN NULL ELSE (Entry.NewPrice-Entry.NewSupplierCost)*100/Entry.NewSupplierCost End As NewCostMS, 
+CASE WHEN ISNULL(Item.Price,0) = 0 THEN NULL ELSE (Item.Price-SupplierList.Cost)*100/Item.Price End As PriceMS, 
+CASE WHEN ISNULL(Entry.NewPrice,0) = 0 THEN NULL ELSE (Entry.NewPrice-Entry.NewSupplierCost)*100/Entry.NewPrice End As NewPriceMS 
+From RRHQMiscellaneous_WorkSheet As RRWS
+Left Join (Select WorksheetID,Max(CASE Style WHEN 250 THEN HQWorksheetID END) As HQ250,Max(CASE Style WHEN 302 THEN HQWorksheetID END) As HQ302,Max(CASE Style WHEN 304 THEN HQWorksheetID END) As HQ304,Max(CASE Style WHEN 305 THEN HQWorksheetID END) As HQ305,Max(CASE Style WHEN 306 THEN HQWorksheetID END) As HQ306 From RRHQMiscellaneous_Reference Left Join Worksheet On Worksheet.ID = RRHQMiscellaneous_Reference.HQWorksheetID Group By RRHQMiscellaneous_Reference.WorkSheetID) As HQWS On HQWS.WorksheetID = RRWS.ID
+Left Join HQUser On HQUser.ID = RRWS.LastUpdatedBy
+Left Join RRHQMiscellaneous_WorkSheetEntry As Entry On Entry.WorksheetID = RRWS.ID
+Left Join Item On Item.ID = Entry.ItemID 
+Left Join SupplierList On SupplierList.ItemID = Entry.ItemID AND SupplierList.SupplierID = Entry.SupplierID  
+Left Join Supplier On SupplierList.SupplierID = Supplier.ID 
+Where RRWS.Status = 1
+<END>
+   
+   TablesQueried = "FROM ViewWorksheet"
+   SelCriteria = ""
+   GroupBy = ""
+   SortOrder = "ID"
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "As Of: <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+
+//--- Columns ---//
+
+Begin Column
+   FieldName = "ViewWorksheet.ID"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Reference #"
+   VBDataType = vbLong
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1245
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.HQ250"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "HQ 250 #"
+   VBDataType = vbLong
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1245
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.HQ302"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "HQ 302 #"
+   VBDataType = vbLong
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1245
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.HQ304"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "HQ 304 #"
+   VBDataType = vbLong
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1245
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.HQ305"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "HQ 305 #"
+   VBDataType = vbLong
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1245
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.HQ306"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "HQ 306 #"
+   VBDataType = vbLong
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1245
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.Name"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Name"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2000
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.UserName"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "HQ User Name"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.Status"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Status"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.ItemLookupCode"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Item Lookup Code"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1800
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.Description"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Description"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2000
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.Subdescription1"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Sub Description 1"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.NewSubdescription1"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "New Sub Description 1"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.Subdescription2"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Sub Description 2"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.NewSubdescription2"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "New Sub Description 2"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.Subdescription3"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Sub Description 3"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.NewSubdescription3"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "New Sub Description 3"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.Price"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Price"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.NewPrice"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "New Price"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.PriceA"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "PriceA"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.NewPriceA"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "New PriceA"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.PriceB"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "PriceB"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.NewPriceB"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "New PriceB"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.PriceC"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "PriceC"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.NewPriceC"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "New PriceC"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.Cost"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Cost"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.NewCost"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "New Cost"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.MSRP"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "MSRP"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.NewMSRP"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "New MSRP"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.SupplierName"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Supplier Name"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1800
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.SupplierCost"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Supplier Cost"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.NewSupplierCost"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "New Supplier Cost"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.CostM"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Cost %"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = "0.00"
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.NewCostM"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "New Cost %"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = "0.00"
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.PriceM"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Price %"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = "0.00"
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.NewPriceM"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "New Price %"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = "0.00"
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.CostMS"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Supplier Cost %"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = "0.00"
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.NewCostMS"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "New Supplier Cost %"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = "0.00"
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.PriceMS"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Supplier Price %"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = "0.00"
+End Column
+
+Begin Column
+   FieldName = "ViewWorksheet.NewPriceMS"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "New Supplier Price %"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1200
+   GroupMethod = groupmethodNone
+   ColFormat = "0.00"
+End Column
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

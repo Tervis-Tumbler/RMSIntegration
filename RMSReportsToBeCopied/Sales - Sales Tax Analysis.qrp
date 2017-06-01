@@ -1,0 +1,180 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeSales
+   ReportTitle = "Sales Tax Analysis"
+   PageOrientation = pageorientationPortrait
+   OutLineMode = True
+   Groups = 1
+   GroupDescription = ""
+   DisplayLogo = True
+   LogoFileName = "MyLogo.Bmp"
+   ProcedureCall = "ListSalesTaxAnalysis"
+   PreQuery1 = "IF EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '#ListSalesTaxAnalysis') DROP TABLE #ListSalesTaxAnalysis"
+   TablesQueried = "FROM #ListSalesTaxAnalysis"
+   SelCriteria = ""
+   GroupBy = ""
+   SortOrder = ""
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "Generate On: <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+Begin Filter
+   FieldName = "#ListSalesTaxAnalysis.[Date]"
+   FilterOp = reportfilteropBetween
+   FilterLoLim = "<MonthStart>"
+   FilterHilim = "<Today>"
+End Filter
+
+//--- Columns ---//
+
+Begin Column
+   FieldName = "#ListSalesTaxAnalysis.TaxCode"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Tax Code"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = True
+   ColWidth = 1300
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "#ListSalesTaxAnalysis.TaxDescription"
+   DrillDownFieldName = "Tax.Description"
+   DrillDownReportName = ""
+   Title = "Tax Authority"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = True
+   ColWidth = 2500
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "#ListSalesTaxAnalysis.TotalSales"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Total Sales"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = True
+   ColWidth = 1700
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+
+
+Begin Column
+   FieldName = "#ListSalesTaxAnalysis.TaxableSales"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Taxable Sales"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = True
+   ColWidth = 1700
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "#ListSalesTaxAnalysis.TaxExemptSales"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Tax Exempt Sales"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = True
+   ColWidth = 1700
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "#ListSalesTaxAnalysis.NonTaxableSales"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Non-Taxable Sales"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = True
+   ColWidth = 1700
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "#ListSalesTaxAnalysis.TaxCollected"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Tax Collected"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = True
+   ColWidth = 1600
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+
+Begin Column
+   FieldName = "#ListSalesTaxAnalysis.[Date]"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Date"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1275
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+

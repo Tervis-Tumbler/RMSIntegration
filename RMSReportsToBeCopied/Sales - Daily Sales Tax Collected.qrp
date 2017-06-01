@@ -1,0 +1,142 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeSales
+   ReportTitle = "Daily Sales Tax Collected"
+   PageOrientation = pageorientationPortrait
+   ShowDateTimePicker = True
+   OutLineMode = True
+   Groups = 1
+   GroupDescription = ""
+   DisplayLogo = True
+   LogoFileName = "MyLogo.Bmp"
+   ProcedureCall = "ListDailyTaxTotals"
+   TablesQueried = "FROM #ListDailyTaxTotals"
+   SelCriteria = ""
+   GroupBy = ""
+   SortOrder = ""
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "As Of: <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+
+//--- Columns ---//
+
+Begin Column
+   FieldName = "#ListDailyTaxTotals.TaxDescription"
+   DrillDownFieldName = "Tax.Description"
+   DrillDownReportName = ""
+   Title = "Sales Tax"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2595
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "#ListDailyTaxTotals.TaxPercentage"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Percentage"
+   VBDataType = vbString
+   Formula = "Str(#ListDailyTaxTotals.TaxPercentage, 5, 2) + '%'"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1110
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "#ListDailyTaxTotals.DailyTax"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Today"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1275
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "#ListDailyTaxTotals.WTDTax"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Week To Date"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1275
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "#ListDailyTaxTotals.MTDTax"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Month To Date"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1275
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "#ListDailyTaxTotals.YTDTax"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Year To Date"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1275
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+

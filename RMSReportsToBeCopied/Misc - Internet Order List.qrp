@@ -1,0 +1,156 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeOrders
+   ReportTitle = "Downloaded Internet Order List"
+   PageOrientation = pageorientationPortrait
+   WordWrap = True
+   OutLineMode = True
+   Groups = 0
+   GroupDescription = ""
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = ""
+   TablesQueried = "FROM [Exchange] WITH(NOLOCK)"
+   SelCriteria = ""
+   GroupBy = ""
+   SortOrder = ""
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "Generated On <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+//Begin Filter
+//   FieldName = "Status"
+//   FilterOp = reportfilteropEqual
+//   FilterLoLim = "Open"
+//   FilterHilim = "Open"
+//End Filter
+
+
+//--- Columns ---//
+
+
+Begin Column
+   FieldName = "[Exchange].DateCreated"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Downloaded"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1600
+   GroupMethod = groupmethodNone
+   ColFormat = "ddddd hh:hh"
+   ColAlignment = flexAlignLeftTop
+End Column
+
+Begin Column
+   FieldName = "[Exchange].Comment"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Order Comment"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 5500
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column
+
+Begin Column
+   FieldName = "Status"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Status"
+   VBDataType = vbString
+   Formula = "CASE [Exchange].Status WHEN 0 THEN 'Open' WHEN 1 THEN 'Processed' ELSE 'Unknown' END"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1000
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column
+
+Begin Column
+   FieldName = "[Exchange].LastUpdated"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Last Updated"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1600
+   GroupMethod = groupmethodNone
+   ColFormat = "ddddd hh:hh"
+   ColAlignment = flexAlignLeftTop
+End Column
+
+Begin Column
+   FieldName = "[Exchange].ProcessorCode"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Processor Code"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1600
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftTop
+End Column
+
+//Begin Column
+//   FieldName = "[Exchange].Data"
+//   DrillDownFieldName = ""
+//   DrillDownReportName = ""
+//   Title = "Order Data in XML"
+//   VBDataType = vbString
+//   Formula = ""
+//   ColHidden = False
+//   ColNotDisplayable = False
+//   FilterDisabled = False
+//   ColWidth = 5500
+//   GroupMethod = groupmethodNone
+//   ColFormat = ""
+//   ColAlignment = flexAlignLeftTop
+//End Column
+

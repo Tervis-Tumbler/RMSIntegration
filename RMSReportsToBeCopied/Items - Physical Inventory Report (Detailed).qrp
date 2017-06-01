@@ -1,0 +1,421 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeItems
+   ReportTitle = "Physical Inventory Report (Detailed)"
+   PageOrientation = pageorientationLandscape
+   OutLineMode = True
+   Groups = 0
+   GroupDescription = ""
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = ""
+   TablesQueried = <BEGIN>
+   		FROM PhysicalInventoryEntry 
+		   INNER JOIN PhysicalInventory ON PhysicalInventory.ID = PhysicalInventoryEntry.PhysicalInventoryID 
+		   INNER JOIN Item ON Item.ID = PhysicalInventoryEntry.ItemID 
+		   LEFT OUTER JOIN Department ON Department.ID = DepartmentID
+   		LEFT OUTER JOIN Category ON Category.ID = CategoryID
+   	<END>
+   SelCriteria = ""
+   GroupBy = ""
+   SortOrder = ""
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "Generated On <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+
+//--- Columns ---//
+
+Begin Column
+   FieldName = "PhysicalInventory.Code"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Ref#"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1050
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "PhysicalInventory.Description"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Description"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2085
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Department.Name"
+   DrillDownFieldName = "Department.Name"
+   DrillDownReportName = ""
+   Title = "Department"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1230
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Category.Name"
+   DrillDownFieldName = "Category.Name"
+   DrillDownReportName = ""
+   Title = "Category"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1230
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Item.ItemLookupCode"
+   DrillDownFieldName = "Item.ItemlookupCode"
+   DrillDownReportName = ""
+   Title = "Item"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1320
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Item.Description"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Item Description"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2085
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Item.BinLocation"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Bin Location"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1335
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "PhysicalInventoryEntry.Cost"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Cost"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 855
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "PhysicalInventoryEntry.Price"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Price"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 855
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "PhysicalInventoryEntry.QuantityRefreshed"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Calculated Qty"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1530
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "PhysicalInventoryEntry.QuantitySold"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Qty Sold"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1050
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "PhysicalInventoryEntry.QuantityReturned"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Qty Returned"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1410
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "PhysicalInventoryEntry.QuantityXferIn"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Qty Xfer In"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1125
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "PhysicalInventoryEntry.QuantityXferOut"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Qty Xfer Out"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1260
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "PhysicalInventoryEntry.QuantityToOffline"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Qty To Offline"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1365
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "PhysicalInventoryEntry.QuantityFromOffline"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Qty From Offline"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1650
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "PhysicalInventoryEntry.QuantityAdjusted"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Qty Adjusted"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1335
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "PhysicalInventoryEntry.QuantityCounted"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Qty Counted To Date"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1935
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "QuantityExpected"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Expected Qty"
+   VBDataType = vbDouble
+   Formula = "(PhysicalInventoryEntry.QuantityRefreshed + PhysicalInventoryEntry.QuantitySold + PhysicalInventoryEntry.QuantityToOffline + PhysicalInventoryEntry.QuantityXferOut - PhysicalInventoryEntry.QuantityReturned - PhysicalInventoryEntry.QuantityFromOffline - PhysicalInventoryEntry.QuantityXferIn - PhysicalInventoryEntry.QuantityAdjusted)"
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1410
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "QuantityDelta"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Delta Qty"
+   VBDataType = vbDouble
+   Formula = "(QuantityCounted - (PhysicalInventoryEntry.QuantityRefreshed + PhysicalInventoryEntry.QuantitySold + PhysicalInventoryEntry.QuantityToOffline + PhysicalInventoryEntry.QuantityXferOut - PhysicalInventoryEntry.QuantityReturned - PhysicalInventoryEntry.QuantityFromOffline - PhysicalInventoryEntry.QuantityXferIn - PhysicalInventoryEntry.QuantityAdjusted))"
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1050
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "PhysicalInventory.DeltaCost"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Delta Cost"
+   VBDataType = vbCurrency
+   Formula = "CAST(PhysicalInventoryEntry.Cost * (QuantityCounted - (PhysicalInventoryEntry.QuantityRefreshed + PhysicalInventoryEntry.QuantitySold + PhysicalInventoryEntry.QuantityToOffline + PhysicalInventoryEntry.QuantityXferOut - PhysicalInventoryEntry.QuantityReturned - PhysicalInventoryEntry.QuantityFromOffline - PhysicalInventoryEntry.QuantityXferIn - PhysicalInventoryEntry.QuantityAdjusted)) AS Money)"
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1095
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "PhysicalInventoryEntry.CountTime"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Count Date"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1185
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "BlankQuantityCounted"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Current Qty Counted"
+   VBDataType = vbString
+   Formula = "'[_________________]'"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2400
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "BlankCountTime"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Current Count Date"
+   VBDataType = vbString
+   Formula = "'[_________________]'"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2010
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column

@@ -1,0 +1,215 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeSales
+   ReportTitle = "Cashier Averages"
+   PageOrientation = pageorientationLandscape
+   WordWrap = False
+   ShowDateTimePicker = False
+   OutLineMode = True
+   Groups = 1
+   GroupDescription = ""
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = ""
+   PreQuery1 = <BEGIN>
+IF EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'VIEWCashierSales') DROP TABLE VIEWCashierSales
+IF EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'VIEWCashierQty') DROP TABLE VIEWCashierQty
+<END>
+   PreQuery2 = <BEGIN>
+
+   SELECT [Transaction].CashierID, 
+	CONVERT(nvarchar, [Transaction].Time, 101)  as DayOfYear, 
+ 	COUNT([Transaction].TransactionNumber) as TotalTrxs, 
+        SUM([Transaction].Total - [Transaction].SalesTax) as TotalSales
+
+   INTO VIEWCashierSales
+
+   FROM [Transaction] 
+  	
+   GROUP BY [Transaction].CashierID, 
+	CONVERT(nvarchar, [Transaction].Time, 101)	
+
+[GO]
+
+   SELECT [Transaction].CashierID, 
+	CONVERT(nvarchar, [Transaction].Time, 101)  as DayOfYear, 
+	SUM(TransactionEntry.Quantity) as TotalQty
+
+   INTO VIEWCashierQty
+
+   FROM [Transaction] 
+      LEFT JOIN TransactionEntry ON [Transaction].TransactionNumber = TransactionEntry.TransactionNumber
+  	
+   GROUP BY [Transaction].CashierID, 
+	CONVERT(nvarchar, [Transaction].Time, 101)
+
+[GO]
+UPDATE ViewCashierSales SET DayOfYear = CONVERT(nvarchar, DayOfYear + ' 12:00:01 AM')
+
+[GO]
+UPDATE ViewCashierQty SET DayOfYear = CONVERT(nvarchar, DayOfYear + ' 12:00:01 AM')
+
+[GO]
+ALTER TABLE VIEWCashierQty
+ALTER COLUMN DayOfYear DateTime
+
+[GO]
+ALTER TABLE VIEWCashierSales
+ALTER COLUMN DayOfYear DateTime
+
+
+[GO]
+ALTER TABLE VIEWCashierSales
+ALTER COLUMN TotalTrxs Float
+
+	
+<END>
+   TablesQueried = <BEGIN>
+   FROM VIEWCashierSales 
+	LEFT JOIN VIEWCashierQty ON VIEWCashierSales.CashierID = VIEWCashierQty.CashierID AND VIEWCashierSales.DayOfYear = VIEWCashierQty.DayOfYear
+	LEFT JOIN Cashier ON VIEWCashierSales.CashierID = Cashier.ID
+<END>
+   SelCriteria = ""
+   GroupBy = "Cashier.Name, Cashier.Number"
+   SortOrder = ""
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "Generated On <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+Begin Filter
+   FieldName = "VIEWCashierSales.DayOfYear"
+   FilterOp = reportfilteropBetween
+   FilterLoLim = "8/1/2008"
+   FilterHilim = "9/16/2008"
+   FilterNegated = False
+   FilterConnector = reportfilterbooleanconAND
+End Filter
+
+
+//--- Columns ---//
+
+Begin Column
+   FieldName = "Cashier.Number"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Cashier #"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1395
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Cashier.Name"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Cashier Name"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1395
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "TotalTrxs"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Transactions/Day"
+   VBDataType = vbDouble
+   Formula = "AVG(VIEWCashierSales.TotalTrxs)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1590
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "TotalSales"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "$/Transaction"
+   VBDataType = vbCurrency
+   Formula = "SUM(VIEWCashierSales.TotalSales)/SUM(ViewCashierSales.TotalTrxs)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1395
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Totalitems"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Units/Transaction"
+   VBDataType = vbDouble
+   Formula = "SUM(VIEWCashierQty.TotalQty)/SUM(ViewCashierSales.TotalTrxs)"
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1620
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "VIEWCashierSales.DayOfYear"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Date"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = True
+   FilterDisabled = False
+   ColWidth = 1395
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+

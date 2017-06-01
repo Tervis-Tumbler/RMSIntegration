@@ -1,0 +1,174 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeSales
+   ReportTitle = "Sales Tax Collected"
+   PageOrientation = pageorientationPortrait
+   OutLineMode = True
+   Groups = 1
+   GroupDescription = ""
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = ""
+   TablesQueried = "FROM TaxTotals WITH(NOLOCK) LEFT JOIN Tax WITH(NOLOCK) ON TaxTotals.TaxID = Tax.ID LEFT JOIN Batch WITH(NOLOCK) ON TaxTotals.BatchNumber = Batch.BatchNumber LEFT JOIN Register WITH(NOLOCK) ON Batch.RegisterID = Register.ID"
+   SelCriteria = ""
+   GroupBy = ""
+   SortOrder = ""
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "Generated On <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+Begin Filter
+   FieldName = "TaxTotals.Date"
+   FilterOp = reportfilteropBetween
+   FilterLoLim = "<MonthStart>"
+   FilterHilim = "<Today>"
+End Filter
+
+
+//--- Columns ---//
+
+Begin Column
+   FieldName = "Tax.Description"
+   DrillDownFieldName = "Tax.Description"
+   Title = "Tax Description"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1965
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "Tax.Percentage"
+   DrillDownFieldName = ""
+   Title = "Percentage"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1080
+   GroupMethod = groupmethodMax
+   ColFormat = "00.##"
+   ColAlignment = flexAlignRightCenter
+End Column
+
+Begin Column
+   FieldName = "TaxTotals.Date"
+   DrillDownFieldName = ""
+   Title = "Date"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 930
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Batch.BatchNumber"
+   DrillDownFieldName = ""
+   Title = "Batch #"
+   VBDataType = vbLong
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 885
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignRightCenter
+End Column
+
+Begin Column
+   FieldName = "Register.Number"
+   DrillDownFieldName = "Register.Number"
+   Title = "Register"
+   VBDataType = vbLong
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 885
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Batch.OpeningTime"
+   DrillDownFieldName = ""
+   Title = "Opened"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1380
+   GroupMethod = groupmethodNone
+   ColFormat = "ddddd hh:mm"
+   ColAlignment = flexAlignRightCenter
+End Column
+
+Begin Column
+   FieldName = "Batch.ClosingTime"
+   DrillDownFieldName = ""
+   Title = "Closed"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1275
+   GroupMethod = groupmethodNone
+   ColFormat = "ddddd hh:mm"
+   ColAlignment = flexAlignRightCenter
+End Column
+
+Begin Column
+   FieldName = "TaxTotals.Total"
+   DrillDownFieldName = ""
+   Title = "Total Collected"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1710
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column

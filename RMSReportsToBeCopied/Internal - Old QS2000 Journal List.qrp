@@ -1,0 +1,82 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeMisc
+   ReportTitle = "Old QS2000 Journal List"
+   PageOrientation = pageorientationPortrait
+   OutLineMode = True
+   Groups = 0
+   GroupDescription = ""
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = ""
+   TablesQueried = "FROM OldJournal "
+   SelCriteria = ""
+   GroupBy = ""
+   SortOrder = "OldJournal.BatchNumber"
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "As Of: <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+
+//--- Columns ---//
+
+Begin Column
+   FieldName = "OldJournal.BatchNumber"
+   DrillDownFieldName = "OldJournal.BatchNumber"
+   DrillDownReportName = ""
+   Title = "Batch"
+   VBDataType = vbLong
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 4500
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "OldJournal.ClosingTime"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   Title = "Closing Time"
+   VBDataType = vbString
+   Formula = "CASE WHEN (OldJournal.ClosingTime > 0) THEN CONVERT(nvarchar, OldJournal.ClosingTime, 20) ELSE ' ' END"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 4455
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignRightBottom
+End Column
+
