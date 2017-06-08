@@ -870,6 +870,7 @@ function Invoke-RMSHQManagerRemoteAppProvision {
     )
     Invoke-ClusterApplicationProvision -ClusterApplicationName RMSHQManagerRemoteApp -EnvironmentName $EnvironmentName
     $Nodes = Get-TervisClusterApplicationNode -ClusterApplicationName RMSHQManagerRemoteApp -EnvironmentName $EnvironmentName
+    $Nodes | Copy-TervisRMSCustomReportsToNode
 }
 
 function Get-TervisBackOfficeDefaultUserName {
@@ -903,6 +904,6 @@ function Copy-TervisRMSCustomReportsToNode {
     }
     process {
         $RemoteDestinationPath = $LocalDestinationPath | ConvertTo-RemotePath -ComputerName $ComputerName
-        Copy-Item -Path $LocalSourcePath -Destination $RemoteDestinationPath
+        Copy-Item -Path $LocalSourcePath -Destination $RemoteDestinationPath -Force
     }
 }
