@@ -868,8 +868,8 @@ function Invoke-RMSHQManagerRemoteAppProvision {
     param (
         $EnvironmentName
     )
-    Invoke-ClusterApplicationProvision -ClusterApplicationName RMSHQManagerRemoteApp -EnvironmentName $EnvironmentName
-    $Nodes = Get-TervisClusterApplicationNode -ClusterApplicationName RMSHQManagerRemoteApp -EnvironmentName $EnvironmentName
+    Invoke-ApplicationProvision -ApplicationName RMSHQManagerRemoteApp -EnvironmentName $EnvironmentName
+    $Nodes = Get-TervisApplicationNode -ApplicationName RMSHQManagerRemoteApp -EnvironmentName $EnvironmentName
     $Nodes | Copy-TervisRMSCustomReportsToNode
 }
 
