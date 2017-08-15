@@ -643,10 +643,27 @@ Begin Column
    Title = "Return Reason Code"
    VBDataType = vbString
    Formula = ""
-   ColHidden = True
+   ColHidden = False
    ColNotDisplayable = False
    FilterDisabled = False
    ColWidth = 2280
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignRightCenter
+End Column
+
+Begin Column
+   FieldName = "TransactionEntry.Comment"
+   DrillDownFieldName = "TransactionEntry.Comment"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Comment"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 3000
    GroupMethod = groupmethodNone
    ColFormat = ""
    ColAlignment = flexAlignRightCenter
