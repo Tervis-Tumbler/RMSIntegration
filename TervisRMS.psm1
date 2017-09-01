@@ -908,3 +908,38 @@ function Copy-TervisRMSCustomReportsToNode {
         Copy-Item -Path $LocalSourcePath -Destination $RemoteDestinationPath -Force
     }
 }
+
+function Get-PersonalizeITXML {
+    param (
+        [Parameter(Mandatory,ValueFromPipelineByPropertyName)]$ComputerName
+    )
+    begin {
+        $LocalXMLPath = "C:\Program Files\nChannel\Personalize\PersonalizeItConfig.xml"
+    }
+    process {
+        $RemoteXMLPath = $LocalXMLPath | ConvertTo-RemotePath -ComputerName $ComputerName
+        $FileInfo = Get-ChildItem $RemoteXMLPath
+        Add-Member -InputObject $FileInfo -MemberType NoteProperty -Name "Version" -Value $FileInfo.VersionInfo.FileVersion
+        [PSCustomObject][Ordered]@{
+            ComputerName = $ComputerName
+            LastWriteTime = $FileInfo.LastWriteTime
+            Version = $FileInfo.Version
+        }
+    }
+}
+
+function Copy-PersonalizeItConfigXmlFile {
+    param (
+        [Parameter(Mandatory,ValueFromPipelineByPropertyName)]$ComputerName,
+        [Parameter(Mandatory)]$SourceFile
+    )
+    begin {
+        $LocalXMLPath = "C:\Program Files\nChannel\Personalize\PersonalizeItConfig.xml"
+    }
+    process {
+        $RemoteXMLPath = $LocalXMLPath | ConvertTo-RemotePath -ComputerName $ComputerName
+        $RemoteXMLPathBackup = $RemoteXMLPath + ".bak"
+        Copy-item -Path $RemoteXMLPath -Destination $RemoteXMLPathBackup -Force
+        Copy-Item -Path $SourceFile -Destination $RemoteXMLPath -Force
+    }       
+}
