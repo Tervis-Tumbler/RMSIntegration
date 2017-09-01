@@ -81,6 +81,12 @@ function Get-RegisterComputers {
     }
 }
 
+function Get-RegisterComputerObjects {
+    Get-ADComputer -Filter * -SearchBase "OU=Register Computers,OU=Remote Store Computers,OU=Computers,OU=Stores,OU=Departments,DC=tervis,DC=prv" |
+        where Enabled -EQ $true |
+        Add-Member -MemberType AliasProperty -Name ComputerName -Value Name -Force -PassThru
+}
+
 function Get-OmittedRegisterComputers {
     param (
         $OnlineRegisterComputers = (Get-RegisterComputers -Online)
@@ -434,21 +440,38 @@ function Stop-SOPOSUSERProcessParallel {
 }
 
 function Get-PersonalizeItConfigFileInfo {
-    $RegisterComputers = Get-RegisterComputers -Online
-
-    foreach ($RegisterComputer in $RegisterComputers) {
-        Invoke-Command -ComputerName $RegisterComputer { Get-ChildItem "C:\Program Files\nChannel\Personalize\PersonalizeItConfig.xml" } -ErrorAction SilentlyContinue | Select-Object pscomputername,name,lastwritetime | sort lastwritetime
+    param (
+        [Parameter(Mandatory,ValueFromPipelineByPropertyName)]$ComputerName
+    )
+    begin {
+        $LocalXMLPath = "C:\Program Files\nChannel\Personalize\PersonalizeItConfig.xml"
     }
-
+    process {
+        $RemoteXMLPath = $LocalXMLPath | ConvertTo-RemotePath -ComputerName $ComputerName
+        $FileInfo = Get-ChildItem $RemoteXMLPath
+        [PSCustomObject][Ordered]@{
+            ComputerName = $ComputerName
+            LastWriteTime = $FileInfo.LastWriteTime
+        }
+    }
 }
 
 function Get-PersonalizeItDllFileInfo {
-    $RegisterComputers = Get-RegisterComputers -Online
-
-    foreach ($RegisterComputer in $RegisterComputers) {
-        Invoke-Command -ComputerName $RegisterComputer { Get-ChildItem "C:\Program Files\nChannel\Personalize\Personalize.dll" } -ErrorAction SilentlyContinue | Select-Object pscomputername,name,lastwritetime
+    param (
+        [Parameter(Mandatory,ValueFromPipelineByPropertyName)]$ComputerName
+    )
+    begin {
+        $LocalXMLPath = "C:\Program Files\nChannel\Personalize\Personalize.dll"
     }
-
+    process {
+        $RemoteXMLPath = $LocalXMLPath | ConvertTo-RemotePath -ComputerName $ComputerName
+        $FileInfo = Get-ChildItem $RemoteXMLPath
+        [PSCustomObject][Ordered]@{
+            ComputerName = $ComputerName
+            LastWriteTime = $FileInfo.LastWriteTime
+            Version = $FileInfo.VersionInfo.FileVersion
+        }
+    }
 }
 
 function Get-PersonalizeItDllFileInfoParallel {
@@ -906,25 +929,6 @@ function Copy-TervisRMSCustomReportsToNode {
     process {
         $RemoteDestinationPath = $LocalDestinationPath | ConvertTo-RemotePath -ComputerName $ComputerName
         Copy-Item -Path $LocalSourcePath -Destination $RemoteDestinationPath -Force
-    }
-}
-
-function Get-PersonalizeITXML {
-    param (
-        [Parameter(Mandatory,ValueFromPipelineByPropertyName)]$ComputerName
-    )
-    begin {
-        $LocalXMLPath = "C:\Program Files\nChannel\Personalize\PersonalizeItConfig.xml"
-    }
-    process {
-        $RemoteXMLPath = $LocalXMLPath | ConvertTo-RemotePath -ComputerName $ComputerName
-        $FileInfo = Get-ChildItem $RemoteXMLPath
-        Add-Member -InputObject $FileInfo -MemberType NoteProperty -Name "Version" -Value $FileInfo.VersionInfo.FileVersion
-        [PSCustomObject][Ordered]@{
-            ComputerName = $ComputerName
-            LastWriteTime = $FileInfo.LastWriteTime
-            Version = $FileInfo.Version
-        }
     }
 }
 
