@@ -60,7 +60,8 @@ function Get-RegisterComputers {
     )
 
     $RegisterComputerNames = Get-ADComputer -Filter * -SearchBase "OU=Register Computers,OU=Remote Store Computers,OU=Computers,OU=Stores,OU=Departments,DC=tervis,DC=prv" |
-    Select -ExpandProperty name
+        where Enabled -EQ $true |
+        Select -ExpandProperty name
 
     $Responses = Start-ParallelWork -ScriptBlock {
         param($Parameter)
