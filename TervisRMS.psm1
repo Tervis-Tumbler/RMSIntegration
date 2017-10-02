@@ -659,6 +659,46 @@ function Get-TervisRMSShift4UTGVersion {
     } | select ComputerName,DisplayName,DisplayVersion,InstallDate
 }
 
+function Get-TervisRMSShift4RMSPluginVersion {
+    [cmdletbinding()]
+    param(
+        $Registers = (Get-RegisterComputers)
+    )
+    Write-Verbose "Getting version numbers for Shift4 RMS"
+    <#
+    Start-ParallelWork -Parameters $Registers -ScriptBlock {
+        param($parameter)
+        $S4RMSProductInformation = Invoke-Command -ComputerName $parameter -ScriptBlock {
+             Get-ChildItem -Path "C:\Program Files\Shift4\S4RMS\s4rms.dll"
+        }
+        if ($S4RMSProductInformation) {
+            [PSCustomObject][Ordered]@{
+                ComputerName = $parameter
+                DisplayName = "S4RMS"
+                DisplayVersion = $S4RMSProductInformation.VersionInfo.FileVersion
+            }
+        } else {
+            Write-Warning "Could not get S4RMS install information from $parameter"
+            #Add-Member -InputObject $UTGProductInformation -MemberType NoteProperty -Name ComputerName -Value $parameter
+        }
+    } | select ComputerName,DisplayName,DisplayVersion
+    #>
+    $S4RmsLocalPath = "C:\Program Files\Shift4\S4RMS\s4rmsconfig.exe"
+    foreach ($Register in $Registers) {
+        try {
+            $S4RmsRemotePath = $S4RmsLocalPath | ConvertTo-RemotePath -ComputerName $Register
+            $S4RmsFileInfo = Get-ChildItem -Path $S4RmsRemotePath -ErrorAction Stop
+            [PSCustomObject][Ordered]@{
+                ComputerName = $Register
+                DisplayName = "S4RMS"
+                Version = $S4RmsFileInfo.VersionInfo.FileVersion
+            }
+        } catch {
+            Write-Warning "Could not reach $Register"
+        }
+    }
+}
+
 function Enable-SQLRemoteAccessForAllRegisterComputers {    
     Write-Verbose -Message "Getting online registers"
     $OnlineRegisters = Get-RegisterComputers -Online
