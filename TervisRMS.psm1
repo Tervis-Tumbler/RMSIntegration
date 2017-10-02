@@ -63,21 +63,20 @@ function Get-RegisterComputers {
         where Enabled -EQ $true |
         Select -ExpandProperty name
 
-    $Responses = Start-ParallelWork -ScriptBlock {
-        param($Parameter)
-        [pscustomobject][ordered]@{
-            RegisterComputerName = $Parameter;
-            Online = $(Test-Connection -ComputerName $Parameter -Count 1 -Quiet);        
-        }
-    } -Parameters $RegisterComputerNames
+   
 
     if ($Online) {
-        $Responses | 
+        $Responses = Start-ParallelWork -ScriptBlock {
+            param($Parameter)
+            [pscustomobject][ordered]@{
+                RegisterComputerName = $Parameter;
+                Online = $(Test-Connection -ComputerName $Parameter -Count 1 -Quiet);        
+            }
+        } -Parameters $RegisterComputerNames | 
         where Online -EQ $true |
         Select -ExpandProperty RegisterComputerName
     } else {
-        $Responses |         
-        Select -ExpandProperty RegisterComputerName
+        $RegisterComputerNames
     }
 }
 
