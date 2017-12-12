@@ -1,4 +1,4 @@
-﻿#Requires -modules TervisPowerShellJobs,InvokeSQL,PasswordstatePowershell,TervisSQLPS
+﻿#Requires -modules TervisPowerShellJobs,InvokeSQL,TervisPasswordstatePowershell,TervisSQLPS
 
 function Get-HeadquartersServers {
     param(
