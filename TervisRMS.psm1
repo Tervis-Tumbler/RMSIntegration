@@ -81,8 +81,13 @@ function Get-RegisterComputers {
 }
 
 function Get-RegisterComputerObjects {
-    Get-ADComputer -Filter * -SearchBase "OU=Register Computers,OU=Remote Store Computers,OU=Computers,OU=Stores,OU=Departments,DC=tervis,DC=prv" |
+    param (
+        [System.UInt16]$MaxAgeInDays = 31
+    )
+
+    Get-ADComputer -Filter * -SearchBase "OU=Register Computers,OU=Remote Store Computers,OU=Computers,OU=Stores,OU=Departments,DC=tervis,DC=prv" -Properties LastLogonDate,IPv4Address |
         where Enabled -EQ $true |
+        where {$_.LastLogonDate -GT (Get-Date).AddDays(-1*$MaxAgeInDays)} |
         Add-Member -MemberType AliasProperty -Name ComputerName -Value Name -Force -PassThru
 }
 
