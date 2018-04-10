@@ -991,3 +991,108 @@ function Copy-PersonalizeItConfigXmlFile {
         Copy-Item -Path $SourceFile -Destination $RemoteXMLPath -Force
     }       
 }
+
+function Invoke-RMSIntegrationSalesBatch{
+    $DBTimeStamp = "0x0000000011C0F5CD"
+    $DataBaseName = "Charleston"
+    $SQLServerName = "DLT-RMSBO3"
+
+
+    $InvokeSQLParameters = @{
+        DataBaseName = $DataBaseName
+        SQLServerName = $SQLServerName
+    }
+
+    $BatchNumbers = Get-RMSIntegrationGetSaleBatchSQLListenerDataSQL -DBTimeStamp $DBTimeStamp @InvokeSQLParameters |
+        Select-Object -ExpandProperty BatchNumber
+
+    foreach ($BatchNumber in $BatchNumbers){
+        Get-RMSIntegrationGetSalesBatchBatchLookup -BatchNumber $BatchNumber @InvokeSQLParameters
+    }
+}
+
+function Get-RMSIntegrationGetSalesBatchBatchLookup {
+    param(
+        [parameter(mandatory)]$BatchNumber,
+        [parameter(mandatory)]$DataBaseName,
+        [parameter(mandatory)]$SQLServerName
+    )
+    # $BatchNumberAsCommanSepratedList = $BatchNumber -join ","
+    # https://sharepoint.tervis.com/InformationTechnology/RMS/Pages/RMSIntegrations/TER/Sample-SQL-Output-by-rms.batchlookup.xslt_15728964.html
+
+    $Query = @"
+SELECT * 
+FROM   batch 
+WHERE  batchnumber IN ( $BatchNumber );
+
+SELECT tt.*, 
+        tender.description 
+FROM   tendertotals tt 
+        JOIN batch 
+            ON tt.storeid = batch.storeid 
+            AND tt.batchnumber = batch.batchnumber 
+        JOIN tender 
+            ON tt.tenderid = tender.id 
+            WHERE  batch.batchnumber IN ( $BatchNumber ) 
+        AND count > 0; 
+
+SELECT b.batchnumber, 
+        Min(t.description) AS Description, 
+        t.code, 
+        Min(t.percentage)  AS Percentage, 
+        Sum(total)         AS Total 
+FROM   taxtotals tt 
+        INNER JOIN tax t 
+                ON tt.taxid = t.id 
+        INNER JOIN batch b 
+                ON tt.batchnumber = b.batchnumber 
+WHERE  b.batchnumber IN ( $BatchNumber ) 
+GROUP  BY b.batchnumber, 
+            t.code; 
+
+SELECT 'Batch' AS TableName 
+UNION ALL 
+SELECT 'TenderTotals' AS TableName 
+UNION ALL 
+SELECT 'TaxTotals' AS TableName 
+"@
+
+    Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SQLServerName -Query $Query
+}
+
+function Get-RMSIntegrationGetSaleBatchSQLListenerListenerSQL{ 
+    param(
+        [parameter(mandatory)]$DataBaseName,
+        [parameter(mandatory)]$SQLServerName
+    )
+
+    $Query = @"
+select top 1 dbtimestamp from [batch] order by dbtimestamp desc
+"@
+    Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SQLServerName -Query $Query
+}
+
+function Get-RMSIntegrationGetSaleBatchSQLListenerDataSQL{ 
+    param(
+        [parameter(mandatory)]$DBTimeStamp,
+        [parameter(mandatory)]$DataBaseName,
+        [parameter(mandatory)]$SQLServerName
+    )
+
+    $Query = @"
+select BatchNumber from [batch] where dbtimestamp > $DBTimeStamp
+"@
+    Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SQLServerName -Query $Query
+}
+
+function Get-RMSIntegrationGetSalesTransaction{
+
+}
+
+function Get-RMSIntegrationGetSalesTransactionSQLListenerListenerSQL{
+
+}
+
+function Get-RMSIntegrationGetSalesTransactionSQLListenerDataSQL{
+
+}
