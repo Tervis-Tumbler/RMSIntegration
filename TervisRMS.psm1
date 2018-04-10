@@ -1002,7 +1002,9 @@ function Invoke-RMSIntegrationSalesBatch{
         DataBaseName = $DataBaseName
         SQLServerName = $SQLServerName
     }
-
+    
+    #$DBTimeStamp = Get-RMSIntegrationGetSaleBatchSQLListenerListenerSQL @InvokeSQLParameters
+    
     $BatchNumbers = Get-RMSIntegrationGetSaleBatchSQLListenerDataSQL -DBTimeStamp $DBTimeStamp @InvokeSQLParameters |
         Select-Object -ExpandProperty BatchNumber
 
@@ -1023,7 +1025,7 @@ function Get-RMSIntegrationGetSalesBatchBatchLookup {
     $Query = @"
 SELECT * 
 FROM   batch 
-WHERE  batchnumber IN ( $BatchNumber );
+WHERE  batchnumber IN ($BatchNumber);
 
 SELECT tt.*, 
         tender.description 
@@ -1033,7 +1035,7 @@ FROM   tendertotals tt
             AND tt.batchnumber = batch.batchnumber 
         JOIN tender 
             ON tt.tenderid = tender.id 
-            WHERE  batch.batchnumber IN ( $BatchNumber ) 
+            WHERE  batch.batchnumber IN ($BatchNumber) 
         AND count > 0; 
 
 SELECT b.batchnumber, 
@@ -1046,7 +1048,7 @@ FROM   taxtotals tt
                 ON tt.taxid = t.id 
         INNER JOIN batch b 
                 ON tt.batchnumber = b.batchnumber 
-WHERE  b.batchnumber IN ( $BatchNumber ) 
+WHERE  b.batchnumber IN ($BatchNumber) 
 GROUP  BY b.batchnumber, 
             t.code; 
 
@@ -1085,14 +1087,98 @@ select BatchNumber from [batch] where dbtimestamp > $DBTimeStamp
     Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SQLServerName -Query $Query
 }
 
-function Get-RMSIntegrationGetSalesTransaction{
+function Invoke-RMSIntegrationSalesTransaction{
+    $DBTimeStamp = "0x0000000011C0F5CD"
+    $DataBaseName = "Charleston"
+    $SQLServerName = "DLT-RMSBO3"
 
+
+    $InvokeSQLParameters = @{
+        DataBaseName = $DataBaseName
+        SQLServerName = $SQLServerName
+    }
+    
+    #$DBTimeStamp = Get-RMSIntegrationGetSalesTransactionSQLListenerListenerSQL @InvokeSQLParameters
+    
+    $TransactionNumbers = Get-RMSIntegrationGetSalesTransactionSQLListenerDataSQL -DBTimeStamp $DBTimeStamp @InvokeSQLParameters |
+        Select-Object -ExpandProperty TransactionNumber
+
+    foreach ($TransactionNumber in $TransactionNumbers){
+        Get-RMSIntegrationGetSalesTransactionTransactionLookup -TransactionNumber $TransactionNumber @InvokeSQLParameters
+    }
+
+}
+
+function Get-RMSIntegrationGetSalesTransactionTransactionLookup{
+    param(
+        [parameter(mandatory)]$TransactionNumber,
+        [parameter(mandatory)]$DataBaseName,
+        [parameter(mandatory)]$SQLServerName
+    )
+    $DataBaseName = "Charleston"
+    $SQLServerName = "DLT-RMSBO3"
+
+    #https://sharepoint.tervis.com/InformationTechnology/RMS/Pages/RMSIntegrations/TER/MSRMSStoreOps---Get-Sales-Transaction_15729034.html
+
+    $Query = @"
+        select * from [Transaction] where TransactionNumber = ($TransactionNumber)
+        select te.*, item.ItemLookupCode ,  item.Description 
+        from transactionentry te join item on te.ItemID=item.ID
+        where te.TransactionNumber in ($TransactionNumber)
+        
+        select * from Customer where ID in (select customerid from [Transaction] where TransactionNumber = ($TransactionNumber))
+        select top 10 * from ShipTo where CustomerID in (select customerid from [Transaction] where TransactionNumber = ($TransactionNumber)) order by dbtimestamp desc
+        select * from TenderEntry where TransactionNumber = $TransactionNumber
+        select te.*, t.* from taxentry te inner join tax t on te.taxid = t.id where te.transactionnumber in ($TransactionNumber)
+        select s.*
+        from shipping s
+        where transactionnumber in ($TransactionNumber)
+        
+        Declare @refNumber nvarchar(50)
+        set @refNumber = (select ReferenceNumber from [Transaction] where TransactionNumber = ($TransactionNumber))
+        Select * from [Order] where ReferenceNumber = '@refNumber'
+        select 'Transaction' as TableName
+        union all
+        select 'TransactionEntry' as TableName
+        union all
+        select 'Customer' as TableName
+        union all
+        select 'ShipTo' as TableName
+        union all
+        select 'TenderEntry' as TableName
+        union all
+        select 'Tax' as TableName
+        union all
+        select 'Shipping' as TableName
+        union all
+        select 'Order' as TableName -- Using this to pulling tracking number out, shipping table doesn't seem to have it.
+"@
+
+    Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SQLServerName -Query $Query
 }
 
 function Get-RMSIntegrationGetSalesTransactionSQLListenerListenerSQL{
+    param(
+        [parameter(mandatory)]$DataBaseName,
+        [parameter(mandatory)]$SQLServerName
+    )
+    $Query = @"
+select top 1 dbtimestamp from [transaction] order by dbtimestamp desc
+"@
 
+    Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SQLServerName -Query $Query
 }
 
 function Get-RMSIntegrationGetSalesTransactionSQLListenerDataSQL{
+    param(
+        [parameter(mandatory)]$DBTimeStamp,
+        [parameter(mandatory)]$DataBaseName,
+        [parameter(mandatory)]$SQLServerName
+    )
 
+    $Query = @"
+select transactionnumber,customerid from [transaction] where dbtimestamp > $DBTimeStamp;
+"@
+
+    Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SQLServerName -Query $Query
 }
