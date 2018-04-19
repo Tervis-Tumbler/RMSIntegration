@@ -1182,3 +1182,43 @@ select transactionnumber,customerid from [transaction] where dbtimestamp > $DBTi
 
     Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SQLServerName -Query $Query
 }
+
+function Invoke-RMSSQLTransferItemQTYFromNonLiddedToLidded{
+    [cmdletbinding()]
+    param(
+#        [parameter(mandatory)]$AliasItemNumber,
+        [parameter(mandatory)]$SqlServerName,
+        [parameter(mandatory)]$CSVDirectory
+    )
+    $ItemList = Import-Csv -Path $CSVDirectory
+    $NonLiddedItemNumbers = $ItemList.NonLiddedItemNumbers
+
+    $DataBaseName = Get-RMSDatabaseName -ComputerName $SqlServerName | select -ExpandProperty RMSDatabaseName
+
+    foreach ($NonLiddedItemNumber in $NonLiddedItemNumbers){
+        $QueryGetItemIDCorrespondingToAlias = @"
+SELECT 
+[ItemID],
+[Alias]
+FROM Alias
+Where Alias = '$NonLiddedItemNumber'
+"@
+
+        $ItemID = Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SQLServerName -Query $QueryGetItemIDCorrespondingToAlias | select -ExpandProperty ItemID
+
+        $QueryGetQuantityCorrespondingToItemID = @"
+SELECT
+[ID],
+[HQID],
+[ExtendedDescription],
+[ItemLookupCode],
+[Quantity]
+FROM Item
+WHERE ID = '$ItemID'
+"@
+
+        $NonLiddedItemQuantity = Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SqlServerName -Query $QueryGetQuantityCorrespondingToItemID | select -ExpandProperty Quantity
+        Write-Output "ItemID:$ItemID Quantity:$NonLiddedItemQuantity"
+    }
+
+}
