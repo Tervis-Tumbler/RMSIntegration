@@ -1190,6 +1190,7 @@ function Invoke-RMSSQLTransferItemQTYFromNonLiddedToLidded{
         [parameter(mandatory)]$SqlServerName,
         [parameter(mandatory)]$CSVDirectory
     )
+
     $ItemList = Import-Csv -Path $CSVDirectory
     $NonLiddedItemNumbers = $ItemList.NonLiddedItemNumbers
 
@@ -1221,4 +1222,97 @@ WHERE ID = '$ItemID'
         Write-Output "ItemID:$ItemID Quantity:$NonLiddedItemQuantity"
     }
 
+}
+
+function Invoke-RMSSQLNonliddedToLiddedItemQuantityConversion{
+    param(
+        [parameter(mandatory)]$SqlServerName,
+        [parameter(mandatory)]$CSVDirectory
+    )
+
+    $DataBaseName = Get-RMSDatabaseName -ComputerName $SqlServerName | select -ExpandProperty RMSDatabaseName
+
+    $ItemList = Import-Csv -Path $CSVDirectory
+
+    $QueryItemTable = @"
+SELECT TOP 3
+    Alias.Alias as NonLiddedItemNumber, Alias.ItemID, Item.Quantity
+FROM 
+    Alias, Item
+WHERE
+    Alias.ItemID = Item.ID AND Quantity > 0
+ORDER BY
+    Alias.Alias
+"@
+
+    $ItemTable = Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SqlServerName -Query $QueryItemTable |
+        Add-Member -Name LiddedItemNumber -MemberType ScriptProperty -Value {$ItemList | where NonLiddedItemNumber -eq $this.NonLiddedItemNumber | select -ExpandProperty LiddedItemNumber} -Force -PassThru
+
+    $NonLiddedItemNumbers = $ItemTable.NonLiddedItemNumber
+    
+    foreach ($NonLiddedItemNumber in $NonLiddedItemNumbers) {
+    $QuerySetItemQuantity = @"
+UPDATE
+    Item
+SET
+    Quantity = 0
+WHERE
+    ID = $NonLiddedItemNumber;
+"@
+
+    Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SqlServerName -Query $QueryItemTable
+    }
+}
+
+function Invoke-AdansRMSSQLNonliddedToLiddedItemQuantityConversion{
+    param(
+        [parameter()]$SqlServerName,
+        [parameter()]$CSVDirectory
+    )
+
+    $DataBaseName = Get-RMSDatabaseName -ComputerName $SqlServerName | select -ExpandProperty RMSDatabaseName
+
+    $ItemList = Import-Csv -Path $CSVDirectory
+    $NonLiddedItemNumberList = $ItemList | Select -ExpandProperty NonLiddedItemNumber
+    $LiddedItemNumberList = $Itemlist | Select -ExpandProperty LiddedItemNumber
+    
+    foreach ($NonLiddedItemNumber in $NonLiddedItemNumberList){
+        $LiddedItemNumber = $ItemList | Where NonLiddedItemNumber -EQ $NonLiddedItemNumber | Select -ExpandProperty LiddedItemNumber
+
+        $QueryConvertNonLiddedItemNumberToTableAliasColumnItemID = @"
+SELECT ItemID
+FROM Alias
+WHERE Alias = '$NonLiddedItemNumber'
+"@
+
+        $UnliddedAliasItemID = Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SqlServerName -Query $QueryConvertNonLiddedItemNumberToTableAliasColumnItemID | select -ExpandProperty ItemID
+
+        $QueryGetItemTable = @"
+SELECT Alias.Alias, Alias.ItemID, Item.Quantity, Item.ID
+FROM Alias, Item
+WHERE Item.ID = Alias.ItemID AND Item.ID = '$UnliddedAliasItemID'
+ORDER BY Alias.Alias
+"@
+        $ItemTable = Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SqlServerName -Query $QueryGetItemTable
+        $NonLiddedItemQuantity = $ItemTable | select -ExpandProperty Quantity
+        $NonLiddedItemQuantity
+
+
+        $QueryConvertLiddedItemNumberToTableAliasColumnItemID = @"
+SELECT ItemID
+FROM Alias
+WHERE Alias = '$LiddedItemNumber'
+"@
+
+        $LiddedAliasItemID =  Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SqlServerName -Query $QueryConvertLiddedItemNumberToTableAliasColumnItemID | select -ExpandProperty ItemID
+        $LiddedAliasItemID
+                    
+        Write-Output "Update $NonLiddedItemNumber With Quantity $NonLiddedItemQuantity to: $LiddedItemNumber"
+        $QueryUpdateLiddedItem = @"
+UPDATE Item
+Set Quantity = $NonLiddedItemQuantity
+WHERE ID = '$LiddedAliasItemID'
+"@
+
+    }
 }
