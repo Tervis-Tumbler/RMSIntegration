@@ -1185,7 +1185,7 @@ select transactionnumber,customerid from [transaction] where dbtimestamp > $DBTi
 
 function Invoke-RMSSQLUpdateItemQuantityFromCSV{
     param(
-        [parameter(mandatory)$ComputerName
+        [parameter(mandatory)]$ComputerName
     )
 
     $CSV = Import-Csv -Path 'C:\users\alozano\OneDrive - Tervis\Desktop\ItemNumberList.csv'
@@ -1197,6 +1197,26 @@ function Invoke-RMSSQLUpdateItemQuantityFromCSV{
 UPDATE Item
 SET Quantity = $($Item.Quantity)
 WHERE ItemID = $($Item.Lidded) AND Item.Quantity = 0
+
+"@
+    }
+
+    Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SQLUpdateQuery
+}
+
+    param(
+        [parameter(mandatory)]$ComputerName
+    )
+
+    $CSV = Import-Csv -Path 'C:\users\alozano\OneDrive - Tervis\Desktop\ItemNumberList.csv'
+    $DatabaseName = Get-RMSDatabaseName -ComputerName $ComputerName -Verbose
+    $SQLUpdateQuery = ""
+
+    foreach ($Item in $CSV){
+        $SQLUpdateQuery += @"
+SELECT Quantity
+FROM Item
+WHERE ItemID = $($Item.Lidded)
 
 "@
     }
