@@ -1196,7 +1196,7 @@ function Invoke-RMSSQLUpdateItemQuantityFromCSV{
         $SQLUpdateQuery += @"
 UPDATE Item
 SET Quantity = $($Item.Quantity)
-WHERE ItemID = $($Item.Lidded) AND Item.Quantity = 0
+WHERE ID = $($Item.Lidded) AND Item.Quantity = 0
 
 "@
     }
@@ -1204,6 +1204,7 @@ WHERE ItemID = $($Item.Lidded) AND Item.Quantity = 0
     Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SQLUpdateQuery
 }
 
+function Invoke-RMSSQLSelectItemQuantitiesFromCSV{
     param(
         [parameter(mandatory)]$ComputerName
     )
@@ -1216,7 +1217,7 @@ WHERE ItemID = $($Item.Lidded) AND Item.Quantity = 0
         $SQLUpdateQuery += @"
 SELECT Quantity
 FROM Item
-WHERE ItemID = $($Item.Lidded)
+WHERE ID = $($Item.Lidded)
 
 "@
     }
