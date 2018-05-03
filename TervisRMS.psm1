@@ -1208,18 +1208,30 @@ function Invoke-RMSSQLSelectItemQuantitiesFromCSV{
     param(
         [parameter(mandatory)]$ComputerName
     )
-
     $CSV = Import-Csv -Path 'C:\users\alozano\OneDrive - Tervis\Desktop\ItemNumberList.csv'
-    $DatabaseName = Get-RMSDatabaseName -ComputerName $ComputerName -Verbose
+    $DatabaseName = Get-RMSDatabaseName -ComputerName $ComputerName | Select-Object -ExpandProperty RMSDatabaseName
+    $LiddedItems = $CSV | Select-Object -ExpandProperty Lidded
     $SQLUpdateQuery = ""
-
-    foreach ($Item in $CSV){
-        $SQLUpdateQuery += @"
-SELECT Quantity
-FROM Item
-WHERE ID = $($Item.Lidded)
-
+    $LiddedItemSQLArray = @"
+('$($CSV.Lidded -join "','")')
 "@
+    $SQLALiasTableSelectQuery = @"
+SELECT Alias, ItemID
+FROM Alias
+WHERE Alias in $LiddedItemSQLArray
+"@
+    
+    $AliasTable = Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SQLALiasTableSelectQuery
+
+    foreach ($LiddedItem in $LiddedItems){
+        $RMSItemID = $AliasTable | Where Alias -EQ $LiddedItem | Select -ExpandProperty ItemID
+#        if ($RMSItemID ~~~Build extra filtering because of duplicate Alias results here
+        $SQLUpdateQuery += (@"
+SELECT ItemID,Quantity
+FROM Item
+WHERE ID = $RMSItemID
+
+"@)
     }
 
     Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SQLUpdateQuery
