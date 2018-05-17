@@ -1183,28 +1183,7 @@ select transactionnumber,customerid from [transaction] where dbtimestamp > $DBTi
     Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SQLServerName -Query $Query
 }
 
-function Invoke-RMSSQLUpdateItemQuantityFromCSV{
-    param(
-        [parameter(mandatory)]$ComputerName
-    )
-
-    $CSV = Import-Csv -Path 'C:\users\alozano\OneDrive - Tervis\Desktop\ItemNumberList.csv'
-    $DatabaseName = Get-RMSDatabaseName -ComputerName $ComputerName -Verbose
-    $SQLUpdateQuery = ""
-
-    foreach ($Item in $CSV){
-        $SQLUpdateQuery += @"
-UPDATE Item
-SET Quantity = $($Item.Quantity)
-WHERE ID = $($Item.Lidded) AND Item.Quantity = 0
-
-"@
-    }
-
-    Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SQLUpdateQuery
-}
-
-function Invoke-RMSSQLSelectItemQuantitiesFromCSV{
+function Invoke-UpdateLiddedItemQuantityFromDBUnliddedItemQuantity{
     param(
         [parameter(mandatory)]$ComputerName
     )
@@ -1237,7 +1216,6 @@ WHERE ItemLookupCode in $UnliddedItemSQLArray
     $LiddedItemResult = Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SelectLiddedItemsSQLQuery
     $UnliddedItemResult = Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SelectUnliddedItemsSQLQuery
 
-# Ham messing around
     $FinalUPCSet = $UnliddedItemResult | ForEach-Object {
         $ReferenceLiddedItemUPC = $CSV | Where-Object UnliddedItemUPC -match $_.ItemLookupCode | Select-Object -ExpandProperty LiddedItemUPC
         [PSCustomObject]@{
@@ -1246,7 +1224,7 @@ WHERE ItemLookupCode in $UnliddedItemSQLArray
             Quantity = $_.Quantity
         }
     }
-
+<# 
     $SupermassiveFinalQuery = ""
     $FinalUPCSet | ForEach-Object {
         $Query = @"
@@ -1257,28 +1235,19 @@ WHERE ItemLookupCode = $($_.LiddedItemUPC) AND Quantity = 0
 
 "@
         $SupermassiveFinalQuery += $Query
+    } #>
+
+    $SupermassiveFinalQuery = ""
+    $FinalUPCSet | ForEach-Object {
+        $Query = @"
+SELECT ItemLookupCode, Quantity
+FROM Item
+WHERE ItemLookupCode = $($_.LiddedItemUPC) AND Quantity = 0
+
+
+"@
+        $SupermassiveFinalQuery += $Query
     }
 
-#    $SQLALiasTableSelectQuery = @"
-#SELECT Alias, ItemID
-#FROM Alias
-#WHERE Alias in $LiddedItemSQLArray
-#"@
-#    
-#    $AliasTable = Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SQLALiasTableSelectQuery
-#
-    foreach ($UPC in $FinalUPCSet){
-        $RMSItemLookupCode = 
-        $SQLUpdateQuery += (@"
-        SELECT Quantity
-        FROM Item
-        WHERE ItemLookupCode = $RMSItemLookupCode and Quantity > 0
-"@)
-    }
-
-#    foreach ($Item in $LiddedItemUPC){
-#    Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SQLUpdateQuery
-#    }
+    Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SupermassiveFinalQuery
 }
-
-Compare-Object -ReferenceObject $CSV.LiddedItemUPC -DifferenceObject $LiddedItemResult.ItemLookupCode
