@@ -1208,31 +1208,35 @@ function Invoke-RMSSQLSelectItemQuantitiesFromCSV{
     param(
         [parameter(mandatory)]$ComputerName
     )
-    $CSV = Import-Csv -Path 'C:\users\alozano\OneDrive - Tervis\Desktop\ItemNumberList.csv'
+    $CSV = Import-Csv -Path 'C:\users\alozano\OneDrive - Tervis\Desktop\Store Lids Project\ItemNumberList.csv'
     $DatabaseName = Get-RMSDatabaseName -ComputerName $ComputerName | Select-Object -ExpandProperty RMSDatabaseName
-    $LiddedItems = $CSV | Select-Object -ExpandProperty Lidded
+    $LiddedItems = $CSV | Select-Object -ExpandProperty UPC
     $SQLUpdateQuery = ""
-    $LiddedItemSQLArray = @"
-('$($CSV.Lidded -join "','")')
-"@
-    $SQLALiasTableSelectQuery = @"
-SELECT Alias, ItemID
-FROM Alias
-WHERE Alias in $LiddedItemSQLArray
-"@
     
-    $AliasTable = Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SQLALiasTableSelectQuery
+    $LiddedItemSQLArray = @"
+('$($CSV.UPC -join "','")')
+"@
+
+#    $SQLALiasTableSelectQuery = @"
+#SELECT Alias, ItemID
+#FROM Alias
+#WHERE Alias in $LiddedItemSQLArray
+#"@
+#    
+#    $AliasTable = Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SQLALiasTableSelectQuery
+#
+#    foreach ($LiddedItem in $LiddedItems){
+#        $RMSItemID = $AliasTable | Where Alias -EQ $LiddedItem | Select -ExpandProperty ItemID
+#        if ($RMSItemID ~~~Build extra filtering because of duplicate Alias results herev
+#        $SQLUpdateQuery += (@"
+#SELECT ItemID,Quantity
+#FROM Item
+#WHERE ID = $RMSItemID
+#
+#"@)
+#    }
 
     foreach ($LiddedItem in $LiddedItems){
-        $RMSItemID = $AliasTable | Where Alias -EQ $LiddedItem | Select -ExpandProperty ItemID
-#        if ($RMSItemID ~~~Build extra filtering because of duplicate Alias results here
-        $SQLUpdateQuery += (@"
-SELECT ItemID,Quantity
-FROM Item
-WHERE ID = $RMSItemID
-
-"@)
-    }
-
     Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SQLUpdateQuery
+    }
 }
