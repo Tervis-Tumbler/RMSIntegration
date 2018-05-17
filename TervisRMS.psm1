@@ -1183,17 +1183,17 @@ select transactionnumber,customerid from [transaction] where dbtimestamp > $DBTi
     Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SQLServerName -Query $Query
 }
 
-function Invoke-UpdateLiddedItemQuantityFromDBUnliddedItemQuantity{
+function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
+    [CmdletBinding()]
     param(
         [parameter(mandatory)]$ComputerName
     )
-    $ComputerName = "1010osbo3-pc"
+    Write-Verbose "Importing CSV"
     $CSV = Import-Csv -Path "\\tervis.prv\departments\IT\IT Shared\Adan\Store Lids Project\ItemNumberList.csv"
+    Write-Verbose "Getting Store DB name"
     $DatabaseName = Get-RMSDatabaseName -ComputerName $ComputerName | Select-Object -ExpandProperty RMSDatabaseName
-#    $LiddedItems = $CSV | Select-Object -ExpandProperty NewItemUPC
-#    $OldLiddedItems = $CSV | Select-Object -ExpandProperty OldItemUPC
-#    $SQLUpdateQuery = ""
     
+    Write-Verbose "Querying DB for UPC quantity data"
     $LiddedItemSQLArray = @"
 ('$($CSV.LiddedItemUPC -join "','")')
 "@
@@ -1210,12 +1210,13 @@ WHERE ItemLookupCode in $LiddedItemSQLArray
     $SelectUnliddedItemsSQLQuery = @"
 SELECT ItemLookupCode, Quantity
 FROM Item
-WHERE ItemLookupCode in $UnliddedItemSQLArray
+WHERE ItemLookupCode in $UnliddedItemSQLArray AND Quantity > 0
 "@
 
     $LiddedItemResult = Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SelectLiddedItemsSQLQuery
     $UnliddedItemResult = Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SelectUnliddedItemsSQLQuery
 
+    Write-Verbose "Building Unlidded/Lidded Quantity table"
     $FinalUPCSet = $UnliddedItemResult | ForEach-Object {
         $ReferenceLiddedItemUPC = $CSV | Where-Object UnliddedItemUPC -match $_.ItemLookupCode | Select-Object -ExpandProperty LiddedItemUPC
         [PSCustomObject]@{
@@ -1224,30 +1225,72 @@ WHERE ItemLookupCode in $UnliddedItemSQLArray
             Quantity = $_.Quantity
         }
     }
-<# 
+    
+    Write-Verbose "Building supermassive final query"
+
     $SupermassiveFinalQuery = ""
     $FinalUPCSet | ForEach-Object {
         $Query = @"
 UPDATE Item
-SET Quantity = $($_.Quantity), LastUpdated = (GETDATE)
-WHERE ItemLookupCode = $($_.LiddedItemUPC) AND Quantity = 0
-
-
-"@
-        $SupermassiveFinalQuery += $Query
-    } #>
-
-    $SupermassiveFinalQuery = ""
-    $FinalUPCSet | ForEach-Object {
-        $Query = @"
-SELECT ItemLookupCode, Quantity
-FROM Item
-WHERE ItemLookupCode = $($_.LiddedItemUPC) AND Quantity = 0
+SET Quantity = $($_.Quantity), LastUpdated = GETDATE() 
+WHERE ItemLookupCode = '$($_.LiddedItemUPC)' AND Quantity = 0
 
 
 "@
         $SupermassiveFinalQuery += $Query
     }
 
+<#     $SupermassiveFinalQuery = ""
+    $FinalUPCSet | ForEach-Object {
+        $Query = @"
+SELECT ItemLookupCode, Quantity
+FROM Item
+WHERE ItemLookupCode = '$($_.LiddedItemUPC)'
+
+
+"@
+        $SupermassiveFinalQuery += $Query
+    } #>
+
+    Write-Verbose "Querying DB with updates"
     Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SupermassiveFinalQuery
+}
+
+function Invoke-RMSSetUnliddedItemQuantitiesToZero{
+    [CmdletBinding()]
+    param(
+        [parameter(mandatory)]$ComputerName
+    )
+    Write-Verbose "Importing CSV"
+    $FinalUPCSet = Import-Csv -Path "\\tervis.prv\departments\IT\IT Shared\Adan\Store Lids Project\FinalUPCSet.csv"
+    Write-Verbose "Getting Store DB name"
+    $DatabaseName = Get-RMSDatabaseName -ComputerName $ComputerName | Select-Object -ExpandProperty RMSDatabaseName
+
+    Write-Verbose "Building supermassive final query"
+    $SupermassiveFinalQuery = ""
+    $FinalUPCSet.UnliddedItemUPC | ForEach-Object {
+        $Query = @"
+SELECT ItemLookupCode, Quantity, LastUpdated
+FROM Item
+WHERE ItemLookupCode = '$_' AND Quantity > 0
+
+
+"@
+        $SupermassiveFinalQuery += $Query
+    }
+<#     $SupermassiveFinalQuery = ""
+    $FinalUPCSet.UnliddedItemUPC | ForEach-Object {
+        $Query = @"
+UPDATE Item
+SET Quantity = 0, LastUpdated = GETDATE()
+WHERE ItemLookupCode = '$_' AND Quantity > 0
+
+
+"@
+        $SupermassiveFinalQuery += $Query
+    } #>
+
+    Write-Verbose "Querying DB with updates"
+    sInvoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SupermassiveFinalQuery
+
 }
