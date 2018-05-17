@@ -1267,7 +1267,7 @@ function Invoke-RMSSetUnliddedItemQuantitiesToZero{
     $DatabaseName = Get-RMSDatabaseName -ComputerName $ComputerName | Select-Object -ExpandProperty RMSDatabaseName
 
     Write-Verbose "Building supermassive final query"
-    $SupermassiveFinalQuery = ""
+<#     $SupermassiveFinalQuery = ""
     $FinalUPCSet.UnliddedItemUPC | ForEach-Object {
         $Query = @"
 SELECT ItemLookupCode, Quantity, LastUpdated
@@ -1277,8 +1277,8 @@ WHERE ItemLookupCode = '$_' AND Quantity > 0
 
 "@
         $SupermassiveFinalQuery += $Query
-    }
-<#     $SupermassiveFinalQuery = ""
+    } #>
+    $SupermassiveFinalQuery = ""
     $FinalUPCSet.UnliddedItemUPC | ForEach-Object {
         $Query = @"
 UPDATE Item
@@ -1288,9 +1288,8 @@ WHERE ItemLookupCode = '$_' AND Quantity > 0
 
 "@
         $SupermassiveFinalQuery += $Query
-    } #>
+    }
 
     Write-Verbose "Querying DB with updates"
-    sInvoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SupermassiveFinalQuery
-
+    Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SupermassiveFinalQuery
 }
