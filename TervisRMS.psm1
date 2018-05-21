@@ -1293,3 +1293,41 @@ WHERE ItemLookupCode = '$_' AND Quantity > 0
     Write-Verbose "Querying DB with updates"
     Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SupermassiveFinalQuery
 }
+
+function Get-ItemFromRMSHQDB{
+    param(
+      [parameter(mandatory)][string]$UPCorEBSItemNumber
+    )
+    $ComputerName = "SQL"
+    $DataBaseName = "TERVIS_RMSHQ1"
+    $UPCorEBSItemNumber.length
+    if ($UPCorEBSItemNumber.length -eq 7){
+    Write-Output "SEVEN"
+        $EBSItemNumber = $UPCorEBSItemNumber
+
+        $SqlQueryGetItemIDFromAlias = @"
+SELECT ItemID
+FROM Alias
+WHERE Alias = '$EBSItemNumber'
+"@
+
+        $ItemID = Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $ComputerName -Query $SqlQueryGetItemIDFromAlias
+        
+        $SqlQuery = @"
+SELECT ID,ItemLookupCode, Quantity, Price, Description 
+FROM Item
+WHERE ID = '$ItemID'
+"@
+
+        Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $ComputerName -Query $SqlQuery
+    } elseif ($UPCorEBSItemNumber.length -eq 12){
+    Write-Output "TWELVE"
+        $UPC = $UPCorEBSItemNumber
+        $SqlQuery = @"
+SELECT ID,ItemLookupCode, Quantity, Price, Description 
+FROM Item
+WHERE ItemLookupCode = '$'
+"@
+        Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $ComputerName -Query $SqlQuery
+    }   
+}
