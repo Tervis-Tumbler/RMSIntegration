@@ -1326,3 +1326,28 @@ WHERE ItemLookupCode = '$UPCorEBSItemNumber'
         Invoke-MSSQL -Database $DataBaseName -Server $ComputerName -SQLCommand $SqlQuery
     }   
 }
+
+function Invoke-GenerateInventoryTransferLog {
+
+    $SQLQuery = @"
+INSERT INTO "OspreyStoredb".."InventoryTransferLog" (
+    "ItemID",
+    "DetailID",
+    "Quantity",
+    "DateTransferred",
+    "ReasonCodeID",
+    "CashierID",
+    "Type",
+    "Cost"
+) VALUES (
+    '$($Item.ID)',
+    '0',
+    '$($Item.Quantity)', 
+    '$($Item.LastUpdatedDate), 
+    0, 
+    1, 
+    1, 
+    '$($Item.Cost)'
+)
+"@
+}
