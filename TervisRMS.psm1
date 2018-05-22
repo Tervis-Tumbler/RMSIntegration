@@ -1296,38 +1296,33 @@ WHERE ItemLookupCode = '$_' AND Quantity > 0
 
 function Get-ItemFromRMSHQDB{
     param(
-      [parameter(mandatory)][string]$UPCorEBSItemNumber
+      [parameter(mandatory)][string]$UPCorEBSItemNumber,
+      [parameter()]$SQLServerName,
+      [parameter()]$SQLDatabaseName
     )
     $ComputerName = "SQL"
     $DataBaseName = "TERVIS_RMSHQ1"
-    $UPCorEBSItemNumber.length
     if ($UPCorEBSItemNumber.length -eq 7){
-    Write-Output "SEVEN"
-        $EBSItemNumber = $UPCorEBSItemNumber
-
         $SqlQueryGetItemIDFromAlias = @"
 SELECT ItemID
 FROM Alias
-WHERE Alias = '$EBSItemNumber'
+WHERE Alias = '$UPCorEBSItemNumber'
 "@
 
-        $ItemID = Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $ComputerName -Query $SqlQueryGetItemIDFromAlias
-        
+        $ItemID = Invoke-MSSQL -Server $SQLServerName -Database $DataBaseName -SQLCommand $SqlQueryGetItemIDFromAlias -ConvertFromDataRow | select -ExpandProperty ItemID
         $SqlQuery = @"
 SELECT ID,ItemLookupCode, Quantity, Price, Description 
 FROM Item
 WHERE ID = '$ItemID'
 "@
 
-        Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $ComputerName -Query $SqlQuery
+        Invoke-MSSQL -Database $DataBaseName -Server $ComputerName -SQLCommand $SqlQuery
     } elseif ($UPCorEBSItemNumber.length -eq 12){
-    Write-Output "TWELVE"
-        $UPC = $UPCorEBSItemNumber
         $SqlQuery = @"
 SELECT ID,ItemLookupCode, Quantity, Price, Description 
 FROM Item
-WHERE ItemLookupCode = '$'
+WHERE ItemLookupCode = '$UPCorEBSItemNumber'
 "@
-        Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $ComputerName -Query $SqlQuery
+        Invoke-MSSQL -Database $DataBaseName -Server $ComputerName -SQLCommand $SqlQuery
     }   
 }
