@@ -1186,35 +1186,48 @@ select transactionnumber,customerid from [transaction] where dbtimestamp > $DBTi
 function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
     [CmdletBinding()]
     param(
-        [parameter(mandatory)]$ComputerName
+        [parameter(mandatory)]$ComputerName,
+        [parameter(mandatory)]$PathToCSV,
+        [parameter(mandatory)]$LiddedItemColumnName,
+        [parameter(mandatory)]$UnliddedItemColumnName
     )
+    $InvokeRMSSQLParameters = @{
+        DatabaseName = $DatabaseName
+        SQLServerName = $ComputerName
+    }
+    $SelectSQLQuerySELECTAndFROM = @"
+SELECT
+    ItemLookupCode, 
+    ID, 
+    Quantity, 
+    Cost,
+    LastUpdated
+FROM
+    Item    
+"@
+
     Write-Verbose "Importing CSV"
-    $CSV = Import-Csv -Path "\\tervis.prv\departments\IT\IT Shared\Adan\Store Lids Project\ItemNumberList.csv"
+    $CSV = Import-Csv -Path $PathToCSV
+    
     Write-Verbose "Getting Store DB name"
     $DatabaseName = Get-RMSDatabaseName -ComputerName $ComputerName | Select-Object -ExpandProperty RMSDatabaseName
     
     Write-Verbose "Querying DB for UPC quantity data"
-    $LiddedItemSQLArray = @"
-('$($CSV.LiddedItemUPC -join "','")')
-"@
-    $UnliddedItemSQLArray = @"
-('$($CSV.UnliddedItemUPC -join "','")')
-"@
+    $LiddedItemSQLArray = ConvertTo-SQLArrayFromCSV -PathToCSV $PathToCSV -CSVColumnName $LiddedItemColumnName
+    $UnliddedItemSQLArray = ConvertTo-SQLArrayFromCSV -PathToCSV $PathToCSV -CSVColumnName $UnliddedItemColumnName
 
     $SelectLiddedItemsSQLQuery = @"
-SELECT ItemLookupCode, Quantity
-FROM Item
+$SelectSQLQuerySELECTAndFROM
 WHERE ItemLookupCode in $LiddedItemSQLArray
 "@
 
     $SelectUnliddedItemsSQLQuery = @"
-SELECT ItemLookupCode, Quantity
-FROM Item
+$SelectSQLQuerySELECTAndFROM
 WHERE ItemLookupCode in $UnliddedItemSQLArray AND Quantity > 0
 "@
 
-    $LiddedItemResult = Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SelectLiddedItemsSQLQuery
-    $UnliddedItemResult = Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SelectUnliddedItemsSQLQuery
+    $LiddedItemResult = Invoke-RMSSQL -Query $SelectLiddedItemsSQLQuery @InvokeRMSSQLParameters
+    $UnliddedItemResult = Invoke-RMSSQL -Query $SelectUnliddedItemsSQLQuery @InvokeRMSSQLParameters
 
     Write-Verbose "Building Unlidded/Lidded Quantity table"
     $FinalUPCSet = $UnliddedItemResult | ForEach-Object {
@@ -1223,6 +1236,7 @@ WHERE ItemLookupCode in $UnliddedItemSQLArray AND Quantity > 0
             UnliddedItemUPC = $_.ItemLookupCode
             LiddedItemUPC = $ReferenceLiddedItemUPC
             Quantity = $_.Quantity
+
         }
     }
     
@@ -1327,9 +1341,12 @@ WHERE ItemLookupCode = '$UPCorEBSItemNumber'
     }   
 }
 
-function Invoke-GenerateInventoryTransferLog {
+function Set-RMSInventoryTransferLog {
+    param(
+        [parameter(Mandatory)]$Item    
+    )
 
-    $SQLQuery = @"
+@"
 INSERT INTO "OspreyStoredb".."InventoryTransferLog" (
     "ItemID",
     "DetailID",
@@ -1343,11 +1360,51 @@ INSERT INTO "OspreyStoredb".."InventoryTransferLog" (
     '$($Item.ID)',
     '0',
     '$($Item.Quantity)', 
-    '$($Item.LastUpdatedDate), 
+    '$($Item.LastUpdated), 
     0, 
     1, 
     1, 
     '$($Item.Cost)'
 )
 "@
+}
+
+function Get-RMSItemsUsingCSV {
+    param(
+        [cmdletbinding()]
+        [parameter(Mandatory)][string]$PathToCSV,
+        [parameter(Mandatory)][string]$CSVColumnName,
+        [parameter(Mandatory)][string]$SQLServerName,
+        [parameter(Mandatory)][string]$DatabaseName
+    )
+
+    $ItemArray = ConvertTo-SQLArrayFromCSV -PathToCSV $PathToCSV -CSVColumnName $CSVColumnName
+
+    $SQLCommand = @"
+    SELECT
+        ItemLookupCode, 
+        ID, 
+        Quantity, 
+        Cost,
+        LastUpdated
+    FROM
+        Item
+    WHERE ItemLookupCode in $ItemArray
+"@
+
+    Invoke-MSSQL -Server $SQLServerName -Database $DatabaseName -SQLCommand $SQLCommand
+}
+
+function Create-RMSInventoryTransferLog{
+    param(
+        [parameter(Mandatory)]$PathToCSV,
+        [parameter(Mandatory)]$CSVColumnName,
+        [parameter(Mandatory)]$Server,
+        [parameter(Mandatory)]$Database
+    )
+    
+    $RMSItems = Get-RMSItemsUsingCSV -PathToCSV $PathToCSV -CSVColumnName $CSVColumnName -SQLServerName $Server -DatabaseName $Database -Verbose
+    foreach ($Item in $RMSItems) {
+        Set-RMSInventoryTransferLog
+    }
 }
