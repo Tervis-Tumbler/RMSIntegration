@@ -1310,9 +1310,7 @@ WHERE ItemLookupCode = '$_' AND Quantity > 0
 
 function Get-ItemFromRMSHQDB{
     param(
-      [parameter(mandatory)][string]$UPCorEBSItemNumber,
-      [parameter()]$SQLServerName,
-      [parameter()]$SQLDatabaseName
+      [parameter(mandatory)][string]$UPCorEBSItemNumber
     )
     $ComputerName = "SQL"
     $DataBaseName = "TERVIS_RMSHQ1"
@@ -1341,12 +1339,17 @@ WHERE ItemLookupCode = '$UPCorEBSItemNumber'
     }   
 }
 
-function Set-RMSInventoryTransferLog {
+function Invoke-RMSInventoryTransferLogQueryCreate {
     param(
-        [parameter(Mandatory)]$Item    
+        [parameter(Mandatory)]$PathToCSV,
+        [parameter(Mandatory)]$CSVColumnName,
+        [parameter(Mandatory)]$SQLServerName,
+        [parameter(Mandatory)]$DatabaseName
     )
-
-@"
+    $Items = Get-RMSItemsUsingCSV @PSBoundParameters
+    
+    foreach ($Item in $Items) {
+        $InventoryTransferLog = @"
 INSERT INTO "OspreyStoredb".."InventoryTransferLog" (
     "ItemID",
     "DetailID",
@@ -1367,6 +1370,9 @@ INSERT INTO "OspreyStoredb".."InventoryTransferLog" (
     '$($Item.Cost)'
 )
 "@
+        $InventoryTransferLogArray += $InventoryTransferLog
+    }
+    $InventoryTransferLogArray
 }
 
 function Get-RMSItemsUsingCSV {
@@ -1382,9 +1388,9 @@ function Get-RMSItemsUsingCSV {
 
     $SQLCommand = @"
     SELECT
-        ItemLookupCode, 
-        ID, 
-        Quantity, 
+        ItemLookupCode,
+        ID,
+        Quantity,
         Cost,
         LastUpdated
     FROM
@@ -1393,18 +1399,4 @@ function Get-RMSItemsUsingCSV {
 "@
 
     Invoke-MSSQL -Server $SQLServerName -Database $DatabaseName -SQLCommand $SQLCommand
-}
-
-function Create-RMSInventoryTransferLog{
-    param(
-        [parameter(Mandatory)]$PathToCSV,
-        [parameter(Mandatory)]$CSVColumnName,
-        [parameter(Mandatory)]$Server,
-        [parameter(Mandatory)]$Database
-    )
-    
-    $RMSItems = Get-RMSItemsUsingCSV -PathToCSV $PathToCSV -CSVColumnName $CSVColumnName -SQLServerName $Server -DatabaseName $Database -Verbose
-    foreach ($Item in $RMSItems) {
-        Set-RMSInventoryTransferLog
-    }
 }
