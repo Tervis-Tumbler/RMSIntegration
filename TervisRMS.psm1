@@ -1254,18 +1254,6 @@ WHERE ItemLookupCode = '$($_.LiddedItemUPC)' AND Quantity = 0
         $SupermassiveFinalQuery += $Query
     }
 
-<#     $SupermassiveFinalQuery = ""
-    $FinalUPCSet | ForEach-Object {
-        $Query = @"
-SELECT ItemLookupCode, Quantity
-FROM Item
-WHERE ItemLookupCode = '$($_.LiddedItemUPC)'
-
-
-"@
-        $SupermassiveFinalQuery += $Query
-    } #>
-
     Write-Verbose "Querying DB with updates"
     Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SupermassiveFinalQuery
 }
@@ -1281,17 +1269,7 @@ function Invoke-RMSSetUnliddedItemQuantitiesToZero{
     $DatabaseName = Get-RMSDatabaseName -ComputerName $ComputerName | Select-Object -ExpandProperty RMSDatabaseName
 
     Write-Verbose "Building supermassive final query"
-<#     $SupermassiveFinalQuery = ""
-    $FinalUPCSet.UnliddedItemUPC | ForEach-Object {
-        $Query = @"
-SELECT ItemLookupCode, Quantity, LastUpdated
-FROM Item
-WHERE ItemLookupCode = '$_' AND Quantity > 0
 
-
-"@
-        $SupermassiveFinalQuery += $Query
-    } #>
     $SupermassiveFinalQuery = ""
     $FinalUPCSet.UnliddedItemUPC | ForEach-Object {
         $Query = @"
