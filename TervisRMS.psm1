@@ -1191,10 +1191,7 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
         [parameter(mandatory)]$LiddedItemColumnName,
         [parameter(mandatory)]$UnliddedItemColumnName
     )
-    $InvokeRMSSQLParameters = @{
-        DatabaseName = $DatabaseName
-        SQLServerName = $ComputerName
-    }
+    <#
     $SelectSQLQuerySELECTAndFROM = @"
 SELECT
     ItemLookupCode, 
@@ -1205,18 +1202,23 @@ SELECT
 FROM
     Item    
 "@
-
+#>
     Write-Verbose "Importing CSV"
-    $CSV = Import-Csv -Path $PathToCSV
+    $CSVObject = Import-Csv -Path $PathToCSV
     
     Write-Verbose "Getting Store DB name"
     $DatabaseName = Get-RMSDatabaseName -ComputerName $ComputerName | Select-Object -ExpandProperty RMSDatabaseName
     
-    Write-Verbose "Querying DB for UPC quantity data"
-    $LiddedItemSQLArray = ConvertTo-SQLArrayFromCSV -PathToCSV $PathToCSV -CSVColumnName $LiddedItemColumnName
-    $UnliddedItemSQLArray = ConvertTo-SQLArrayFromCSV -PathToCSV $PathToCSV -CSVColumnName $UnliddedItemColumnName
+    $InvokeRMSSQLParameters = @{
+        DatabaseName = $DatabaseName
+        SQLServerName = $ComputerName
+    }
 
-    $SelectLiddedItemsSQLQuery = @"
+<#     Write-Verbose "Querying DB for UPC quantity data"
+    $LiddedItemSQLArray = ConvertTo-SQLArrayFromCSV -CSVObject $CSVObject -CSVColumnName $LiddedItemColumnName
+    $UnliddedItemSQLArray = ConvertTo-SQLArrayFromCSV -CSVObject $CSVObject -CSVColumnName $UnliddedItemColumnName
+ #>
+<#     $SelectLiddedItemsSQLQuery = @"
 $SelectSQLQuerySELECTAndFROM
 WHERE ItemLookupCode in $LiddedItemSQLArray
 "@
@@ -1225,10 +1227,14 @@ WHERE ItemLookupCode in $LiddedItemSQLArray
 $SelectSQLQuerySELECTAndFROM
 WHERE ItemLookupCode in $UnliddedItemSQLArray AND Quantity > 0
 "@
-
-    $LiddedItemResult = Invoke-RMSSQL -Query $SelectLiddedItemsSQLQuery @InvokeRMSSQLParameters
+ #>
+<#     $LiddedItemResult = Invoke-RMSSQL -Query $SelectLiddedItemsSQLQuery @InvokeRMSSQLParameters
     $UnliddedItemResult = Invoke-RMSSQL -Query $SelectUnliddedItemsSQLQuery @InvokeRMSSQLParameters
+ #>
 
+    $LiddedItemResult = Get-RMSItemsUsingCSV -CSVObject $CSVObject -CSVColumnName $LiddedItemColumnName @InvokeRMSSQLParameters
+    $UnliddedItemResult = Get-RMSItemsUsingCSV -CSVObject $CSVObject -CSVColumnName $UnliddedItemColumnName @InvokeRMSSQLParameters
+    
     Write-Verbose "Building Unlidded/Lidded Quantity table"
     $FinalUPCSet = $UnliddedItemResult | ForEach-Object {
         $ReferenceLiddedItemUPC = $CSV | Where-Object UnliddedItemUPC -match $_.ItemLookupCode | Select-Object -ExpandProperty LiddedItemUPC
@@ -1255,7 +1261,7 @@ WHERE ItemLookupCode = '$($_.LiddedItemUPC)' AND Quantity = 0
     }
 
     Write-Verbose "Querying DB with updates"
-    Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SupermassiveFinalQuery
+    #Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SupermassiveFinalQuery
 }
 
 function Invoke-RMSSetUnliddedItemQuantitiesToZero{
@@ -1319,7 +1325,7 @@ WHERE ItemLookupCode = '$UPCorEBSItemNumber'
 
 function Invoke-RMSInventoryTransferLogQueryCreate {
     param(
-        [parameter(Mandatory)]$PathToCSV,
+        [parameter(Mandatory)][PSCustomObject]$CSVObject,
         [parameter(Mandatory)]$CSVColumnName,
         [parameter(Mandatory)]$SQLServerName,
         [parameter(Mandatory)]$DatabaseName
@@ -1356,13 +1362,13 @@ INSERT INTO "OspreyStoredb".."InventoryTransferLog" (
 function Get-RMSItemsUsingCSV {
     param(
         [cmdletbinding()]
-        [parameter(Mandatory)][string]$PathToCSV,
+        [parameter(Mandatory)][PSCustomObject]$CSVObject,
         [parameter(Mandatory)][string]$CSVColumnName,
         [parameter(Mandatory)][string]$SQLServerName,
         [parameter(Mandatory)][string]$DatabaseName
     )
 
-    $ItemArray = ConvertTo-SQLArrayFromCSV -PathToCSV $PathToCSV -CSVColumnName $CSVColumnName
+    $ItemArray = ConvertTo-SQLArrayFromCSV -CSVObject $CSVObject -CSVColumnName $CSVColumnName
 
     $SQLCommand = @"
     SELECT
