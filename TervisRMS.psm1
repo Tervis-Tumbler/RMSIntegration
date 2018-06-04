@@ -1259,7 +1259,7 @@ WHERE ItemLookupCode = '$($_.LiddedItemUPC)' AND Quantity = 0
 "@
         $SupermassiveFinalQuery += $Query
     }
-
+$SupermassiveFinalQuery
     Write-Verbose "Querying DB with updates"
     #Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SupermassiveFinalQuery
 }
@@ -1357,6 +1357,49 @@ INSERT INTO "OspreyStoredb".."InventoryTransferLog" (
         $InventoryTransferLogArray += $InventoryTransferLog
     }
     $InventoryTransferLogArray
+}
+
+function Invoke-RMSInventoryTransferLogThing {
+    param(
+        [parameter(Mandatory)][PSCustomObject]$CSVObject,
+        [parameter(Mandatory)]$CSVColumnName,
+        [parameter(Mandatory)]$SQLServerName,
+        [parameter(Mandatory)]$DatabaseName
+    )
+    $Items = Get-RMSItemsUsingCSV @PSBoundParameters
+    $Items | New-RMSInventoryTransferLogQuery
+}
+
+function New-RMSInventoryTransferLogQuery {
+    param(
+        [parameter(Mandatory,ValueFromPipelineByPropertyName)]$ID,
+        [parameter(Mandatory,ValueFromPipelineByPropertyName)]$Quantity,
+        [parameter(Mandatory,ValueFromPipelineByPropertyName)]$LastUpdated,
+        [parameter(Mandatory,ValueFromPipelineByPropertyName)]$Cost
+    )
+    process {
+@"
+INSERT INTO "OspreyStoredb".."InventoryTransferLog" (
+    "ItemID",
+    "DetailID",
+    "Quantity",
+    "DateTransferred",
+    "ReasonCodeID",
+    "CashierID",
+    "Type",
+    "Cost"
+) VALUES (
+    '$ID',
+    '0',
+    '$Quantity', 
+    '$LastUpdated, 
+    0, 
+    1, 
+    1, 
+    '$Cost'
+)
+"@
+    }
 }
 
 function Get-RMSItemsUsingCSV {
