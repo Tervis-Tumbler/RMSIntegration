@@ -1232,12 +1232,14 @@ WHERE ItemLookupCode in $UnliddedItemSQLArray AND Quantity > 0
     $UnliddedItemResult = Invoke-RMSSQL -Query $SelectUnliddedItemsSQLQuery @InvokeRMSSQLParameters
  #>
 
-    $LiddedItemResult = Get-RMSItemsUsingCSV -CSVObject $CSVObject -CSVColumnName $LiddedItemColumnName @InvokeRMSSQLParameters
+    #$LiddedItemResult = Get-RMSItemsUsingCSV -CSVObject $CSVObject -CSVColumnName $LiddedItemColumnName @InvokeRMSSQLParameters | ConvertTo-IndexedHashtable
     $UnliddedItemResult = Get-RMSItemsUsingCSV -CSVObject $CSVObject -CSVColumnName $UnliddedItemColumnName @InvokeRMSSQLParameters
-    
+    $IndexedCSV = $CSVObject | ConvertTo-IndexedHashtable -PropertyToIndex "UnliddedItem"
+
     Write-Verbose "Building Unlidded/Lidded Quantity table"
     $FinalUPCSet = $UnliddedItemResult | ForEach-Object {
-        $ReferenceLiddedItemUPC = $CSV | Where-Object UnliddedItem -match $_.ItemLookupCode | Select-Object -ExpandProperty LiddedItem
+        #$ReferenceLiddedItemUPC = $CSVObject | Where-Object UnliddedItem -match $_.ItemLookupCode | Select-Object -ExpandProperty LiddedItem
+        $ReferenceLiddedItemUPC = $IndexedCSV["$($_.ItemLookupCode)"].LiddedItem
         [PSCustomObject]@{
             UnliddedItemUPC = $_.ItemLookupCode
             LiddedItemUPC = $ReferenceLiddedItemUPC
