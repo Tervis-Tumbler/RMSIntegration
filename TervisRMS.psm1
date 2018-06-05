@@ -1237,7 +1237,7 @@ WHERE ItemLookupCode in $UnliddedItemSQLArray AND Quantity > 0
     
     Write-Verbose "Building Unlidded/Lidded Quantity table"
     $FinalUPCSet = $UnliddedItemResult | ForEach-Object {
-        $ReferenceLiddedItemUPC = $CSV | Where-Object UnliddedItemUPC -match $_.ItemLookupCode | Select-Object -ExpandProperty LiddedItemUPC
+        $ReferenceLiddedItemUPC = $CSV | Where-Object UnliddedItem -match $_.ItemLookupCode | Select-Object -ExpandProperty LiddedItem
         [PSCustomObject]@{
             UnliddedItemUPC = $_.ItemLookupCode
             LiddedItemUPC = $ReferenceLiddedItemUPC
@@ -1253,7 +1253,7 @@ WHERE ItemLookupCode in $UnliddedItemSQLArray AND Quantity > 0
         $Query = @"
 UPDATE Item
 SET Quantity = $($_.Quantity), LastUpdated = GETDATE() 
-WHERE ItemLookupCode = '$($_.LiddedItem)' AND Quantity = 0
+WHERE ItemLookupCode = '$($_.LiddedItemUPC)' AND Quantity = 0
 
 
 "@
@@ -1432,4 +1432,22 @@ function Get-RMSItemsUsingCSV {
 "@
 
     Invoke-MSSQL -Server $SQLServerName -Database $DatabaseName -SQLCommand $SQLCommand
+}
+
+function ConvertTo-IndexedHashtable {
+    param (
+        [Parameter(Mandatory,ValueFromPipeline)]$InputObject,
+        [Parameter(Mandatory)]$PropertyToIndex
+    )
+    begin {
+        $HashTable = @{}
+    }
+    process {
+        $HashTable += @{
+            $InputObject.$PropertyToIndex = $InputObject
+        }
+    }
+    end {
+        $HashTable
+    }
 }
