@@ -1250,9 +1250,9 @@ WHERE ItemLookupCode in $UnliddedItemSQLArray AND Quantity > 0
     
     Write-Verbose "Building supermassive final query"
 
-    $SupermassiveFinalQuery = ""
+    $UpdateItemQueryArray = ""
     $FinalUPCSet | ForEach-Object {
-        $Query = @"
+        $UpdateItemQuery = @"
 UPDATE Item
 SET Quantity = $($_.Quantity), LastUpdated = GETDATE() 
 WHERE ItemLookupCode = '$($_.LiddedItemUPC)' AND Quantity = 0
@@ -1260,15 +1260,17 @@ WHERE ItemLookupCode = '$($_.LiddedItemUPC)' AND Quantity = 0
 
 "@
 
-    $InventoryTransferLogQuery = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName ItemLookupCode -SQLServerName 1010osbo3-pc -DatabaseName $DatabaseName -Verbose
+        $InventoryTransferLogQuery = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName "ItemLookupCode" -SQLServerName "1010osbo3-pc" -DatabaseName $DatabaseName -Verbose
 
-        $SupermassiveFinalQuery += $Query
+        $UpdateItemQueryArray += $UpdateItemQuery
+        $InventoryTransferLogQueryArray += $InventoryTransferLogQuery
     }
-$SupermassiveFinalQuery
+    
+    $UpdateItemQueryArray
+    $InventoryTransferLogQueryArray
     Write-Verbose "Querying DB with updates"
-    Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SupermassiveFinalQuery
-
-    $InventoryTransferLogQuery
+    #Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $UpdateItemQueryArray
+    #Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $InventoryTransferLogQueryArray
 }
 
 function Invoke-RMSSetUnliddedItemQuantitiesToZero{
