@@ -1254,7 +1254,7 @@ WHERE ItemLookupCode in $UnliddedItemSQLArray AND Quantity > 0
         $UpdateItemQuery = @"
 UPDATE Item
 SET Quantity = $($_.Quantity), LastUpdated = GETDATE() 
-WHERE ItemLookupCode = '$($_.$LiddedItemColumnName)' AND Quantity = 0
+WHERE ItemLookupCode = '$($_.$LiddedItemColumnName)' --AND Quantity = 0
 
 
 "@
@@ -1268,8 +1268,8 @@ WHERE ItemLookupCode = '$($_.$LiddedItemColumnName)' AND Quantity = 0
     $UpdateItemQueryArray
     $InventoryTransferLogQueryArray
     Write-Verbose "Querying DB with updates"
-    #Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $UpdateItemQueryArray
-    #Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $InventoryTransferLogQueryArray
+    Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $UpdateItemQueryArray
+    Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $InventoryTransferLogQueryArray
 }
 
 function Invoke-RMSSetUnliddedItemQuantitiesToZero{
@@ -1332,6 +1332,7 @@ WHERE ItemLookupCode = '$UPCorEBSItemNumber'
     }   
 }
 
+<#
 function Invoke-RMSInventoryTransferLogQueryCreate {
     param(
         [parameter(Mandatory)][PSCustomObject]$CSVObject,
@@ -1343,7 +1344,7 @@ function Invoke-RMSInventoryTransferLogQueryCreate {
     
     foreach ($Item in $Items) {
         $InventoryTransferLog = @"
-INSERT INTO "OspreyStoredb".."InventoryTransferLog" (
+INSERT INTO InventoryTransferLog" (
     "ItemID",
     "DetailID",
     "Quantity",
@@ -1356,7 +1357,7 @@ INSERT INTO "OspreyStoredb".."InventoryTransferLog" (
     '$($Item.ID)',
     '0',
     '$($Item.Quantity)', 
-    '$($Item.LastUpdated), 
+    '$($Item.LastUpdated)', 
     0, 
     1, 
     1, 
@@ -1367,7 +1368,7 @@ INSERT INTO "OspreyStoredb".."InventoryTransferLog" (
     }
     $InventoryTransferLogArray
 }
-
+#>
 function Invoke-RMSInventoryTransferLogThing {
     param(
         [parameter(Mandatory)][PSCustomObject]$CSVObject,
@@ -1386,6 +1387,7 @@ function New-RMSInventoryTransferLogQuery {
         [parameter(Mandatory,ValueFromPipelineByPropertyName)]$LastUpdated,
         [parameter(Mandatory,ValueFromPipelineByPropertyName)]$Cost
     )
+
     process {
 @"
 INSERT INTO InventoryTransferLog (
@@ -1400,8 +1402,14 @@ INSERT INTO InventoryTransferLog (
 ) VALUES (
     '$ID',
     '0',
-    '$Quantity', 
-    '$LastUpdated, 
+    '$Quantity',
+    (SELECT 
+        LastUpdated
+    FROM
+        Item
+    WHERE
+        ID = '$ID'
+    ),
     0, 
     1, 
     1, 
@@ -1423,15 +1431,16 @@ function Get-RMSItemsUsingCSV {
     $ItemArray = ConvertTo-SQLArrayFromCSV -CSVObject $CSVObject -CSVColumnName $CSVColumnName
 
     $SQLCommand = @"
-    SELECT
-        ItemLookupCode,
-        ID,
-        Quantity,
-        Cost,
-        LastUpdated
-    FROM
-        Item
-    WHERE ItemLookupCode in $ItemArray
+SELECT
+    ItemLookupCode,
+    ID,
+    Quantity,
+    Cost,
+    LastUpdated
+FROM
+    Item
+WHERE 
+    ItemLookupCode in $ItemArray
 "@
 
     Invoke-MSSQL -Server $SQLServerName -Database $DatabaseName -SQLCommand $SQLCommand
