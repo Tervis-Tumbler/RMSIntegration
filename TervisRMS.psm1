@@ -1241,8 +1241,8 @@ WHERE ItemLookupCode in $UnliddedItemSQLArray AND Quantity > 0
         #$ReferenceLiddedItemUPC = $CSVObject | Where-Object UnliddedItem -match $_.ItemLookupCode | Select-Object -ExpandProperty LiddedItem
         $ReferenceLiddedItemUPC = $IndexedCSV["$($_.ItemLookupCode)"].LiddedItem
         [PSCustomObject]@{
-            UnliddedItemUPC = $_.ItemLookupCode
-            LiddedItemUPC = $ReferenceLiddedItemUPC
+            $UnliddedItemColumnName = $_.ItemLookupCode
+            $LiddedItemColumnName = $ReferenceLiddedItemUPC
             Quantity = $_.Quantity
 
         }
@@ -1250,17 +1250,16 @@ WHERE ItemLookupCode in $UnliddedItemSQLArray AND Quantity > 0
     
     Write-Verbose "Building supermassive final query"
 
-    $UpdateItemQueryArray = ""
     $FinalUPCSet | ForEach-Object {
         $UpdateItemQuery = @"
 UPDATE Item
 SET Quantity = $($_.Quantity), LastUpdated = GETDATE() 
-WHERE ItemLookupCode = '$($_.LiddedItemUPC)' AND Quantity = 0
+WHERE ItemLookupCode = '$($_.$LiddedItemColumnName)' AND Quantity = 0
 
 
 "@
 
-        $InventoryTransferLogQuery = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName "ItemLookupCode" -SQLServerName "1010osbo3-pc" -DatabaseName $DatabaseName -Verbose
+        $InventoryTransferLogQuery = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $LiddedItemColumnName -SQLServerName $ComputerName -DatabaseName $DatabaseName -Verbose
 
         $UpdateItemQueryArray += $UpdateItemQuery
         $InventoryTransferLogQueryArray += $InventoryTransferLogQuery
@@ -1389,7 +1388,7 @@ function New-RMSInventoryTransferLogQuery {
     )
     process {
 @"
-INSERT INTO "OspreyStoredb".."InventoryTransferLog" (
+INSERT INTO InventoryTransferLog (
     "ItemID",
     "DetailID",
     "Quantity",
