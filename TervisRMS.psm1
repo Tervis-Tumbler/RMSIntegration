@@ -1234,7 +1234,11 @@ WHERE ItemLookupCode in $UnliddedItemSQLArray AND Quantity > 0
 
     #$LiddedItemResult = Get-RMSItemsUsingCSV -CSVObject $CSVObject -CSVColumnName $LiddedItemColumnName @InvokeRMSSQLParameters | ConvertTo-IndexedHashtable
     $UnliddedItemResult = Get-RMSItemsUsingCSV -CSVObject $CSVObject -CSVColumnName $UnliddedItemColumnName @InvokeRMSSQLParameters
-    $IndexedCSV = $CSVObject | ConvertTo-IndexedHashtable -PropertyToIndex "UnliddedItem"
+    try {
+        $IndexedCSV = $CSVObject | ConvertTo-IndexedHashtable -PropertyToIndex "UnliddedItem" -ErrorAction Stop
+    } catch {
+        throw "Item codes in CSV are not unique one-to-one combinations."
+    }
 
     Write-Verbose "Building Unlidded/Lidded Quantity table"
     $FinalUPCSet = $UnliddedItemResult | ForEach-Object {
