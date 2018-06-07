@@ -1314,9 +1314,9 @@ FROM Alias
 WHERE Alias = '$UPCorEBSItemNumber'
 "@
 
-        $ItemID = Invoke-MSSQL -Server $SQLServerName -Database $DataBaseName -SQLCommand $SqlQueryGetItemIDFromAlias -ConvertFromDataRow | select -ExpandProperty ItemID
+        $ItemID = Invoke-MSSQL -Server $ComputerName -Database $DataBaseName -SQLCommand $SqlQueryGetItemIDFromAlias -ConvertFromDataRow | select -ExpandProperty ItemID
         $SqlQuery = @"
-SELECT ID,ItemLookupCode, Quantity, Price, Description 
+SELECT ID, HQID, ItemLookupCode, Quantity, Price, Description 
 FROM Item
 WHERE ID = '$ItemID'
 "@
@@ -1324,7 +1324,7 @@ WHERE ID = '$ItemID'
         Invoke-MSSQL -Database $DataBaseName -Server $ComputerName -SQLCommand $SqlQuery
     } elseif ($UPCorEBSItemNumber.length -eq 12){
         $SqlQuery = @"
-SELECT ID,ItemLookupCode, Quantity, Price, Description 
+SELECT ID, HQID, ItemLookupCode, Quantity, Price, Description 
 FROM Item
 WHERE ItemLookupCode = '$UPCorEBSItemNumber'
 "@
