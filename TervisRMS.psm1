@@ -1238,10 +1238,10 @@ WHERE ItemLookupCode = '$($_.$LiddedItemColumnName)' AND Quantity = 0
     $InventoryTransferLogQuery = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $LiddedItemColumnName -SQLServerName $ComputerName -DatabaseName $DatabaseName -Verbose
     
     Write-Verbose "Querying DB with updates"
-    #Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $UpdateItemQueryArray
+    Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $UpdateItemQueryArray
 
     Write-Verbose "Querying DB with Inventory Transfer Log"
-    Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $InventoryTransferLogQueryArray
+    Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $InventoryTransferLogQuery
 }
 
 function Invoke-RMSSetUnliddedItemQuantitiesToZero{
