@@ -1191,18 +1191,7 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
         [parameter(mandatory)]$LiddedItemColumnName,
         [parameter(mandatory)]$UnliddedItemColumnName
     )
-    <#
-    $SelectSQLQuerySELECTAndFROM = @"
-SELECT
-    ItemLookupCode, 
-    ID, 
-    Quantity, 
-    Cost,
-    LastUpdated
-FROM
-    Item    
-"@
-#>
+
     Write-Verbose "Importing CSV"
     $CSVObject = Import-Csv -Path $PathToCSV
     
@@ -1214,25 +1203,6 @@ FROM
         SQLServerName = $ComputerName
     }
 
-<#     Write-Verbose "Querying DB for UPC quantity data"
-    $LiddedItemSQLArray = ConvertTo-SQLArrayFromCSV -CSVObject $CSVObject -CSVColumnName $LiddedItemColumnName
-    $UnliddedItemSQLArray = ConvertTo-SQLArrayFromCSV -CSVObject $CSVObject -CSVColumnName $UnliddedItemColumnName
- #>
-<#     $SelectLiddedItemsSQLQuery = @"
-$SelectSQLQuerySELECTAndFROM
-WHERE ItemLookupCode in $LiddedItemSQLArray
-"@
-
-    $SelectUnliddedItemsSQLQuery = @"
-$SelectSQLQuerySELECTAndFROM
-WHERE ItemLookupCode in $UnliddedItemSQLArray AND Quantity > 0
-"@
- #>
-<#     $LiddedItemResult = Invoke-RMSSQL -Query $SelectLiddedItemsSQLQuery @InvokeRMSSQLParameters
-    $UnliddedItemResult = Invoke-RMSSQL -Query $SelectUnliddedItemsSQLQuery @InvokeRMSSQLParameters
- #>
-
-    #$LiddedItemResult = Get-RMSItemsUsingCSV -CSVObject $CSVObject -CSVColumnName $LiddedItemColumnName @InvokeRMSSQLParameters | ConvertTo-IndexedHashtable
     $UnliddedItemResult = Get-RMSItemsUsingCSV -CSVObject $CSVObject -CSVColumnName $UnliddedItemColumnName @InvokeRMSSQLParameters
     try {
         $IndexedCSV = $CSVObject | ConvertTo-IndexedHashtable -PropertyToIndex "UnliddedItem" -ErrorAction Stop
@@ -1242,7 +1212,6 @@ WHERE ItemLookupCode in $UnliddedItemSQLArray AND Quantity > 0
 
     Write-Verbose "Building Unlidded/Lidded Quantity table"
     $FinalUPCSet = $UnliddedItemResult | ForEach-Object {
-        #$ReferenceLiddedItemUPC = $CSVObject | Where-Object UnliddedItem -match $_.ItemLookupCode | Select-Object -ExpandProperty LiddedItem
         $ReferenceLiddedItemUPC = $IndexedCSV["$($_.ItemLookupCode)"].LiddedItem
         [PSCustomObject]@{
             $UnliddedItemColumnName = $_.ItemLookupCode
@@ -1258,29 +1227,27 @@ WHERE ItemLookupCode in $UnliddedItemSQLArray AND Quantity > 0
         $UpdateItemQuery = @"
 UPDATE Item
 SET Quantity = $($_.Quantity), LastUpdated = GETDATE() 
-WHERE ItemLookupCode = '$($_.$LiddedItemColumnName)' --AND Quantity = 0
+WHERE ItemLookupCode = '$($_.$LiddedItemColumnName)' AND Quantity = 0
 
 
 "@
-
-        $InventoryTransferLogQuery = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $LiddedItemColumnName -SQLServerName $ComputerName -DatabaseName $DatabaseName -Verbose
-
         $UpdateItemQueryArray += $UpdateItemQuery
-        $InventoryTransferLogQueryArray += $InventoryTransferLogQuery
     }
     
-    $UpdateItemQueryArray
-    $InventoryTransferLogQueryArray
+    Write-Verbose "Building RMS Inventory Transfer Log query"
+    $InventoryTransferLogQuery = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $LiddedItemColumnName -SQLServerName $ComputerName -DatabaseName $DatabaseName -Verbose
+    
     Write-Verbose "Querying DB with updates"
-    Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $UpdateItemQueryArray
+    #Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $UpdateItemQueryArray
+
+    Write-Verbose "Querying DB with Inventory Transfer Log"
     Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $InventoryTransferLogQueryArray
 }
 
 function Invoke-RMSSetUnliddedItemQuantitiesToZero{
     [CmdletBinding()]
     param(
-        [parameter(mandatory)]$ComputerName
-    )
+        [parameter(mandatory)]$ComputerName)
     Write-Verbose "Importing CSV"
     $FinalUPCSet = Import-Csv -Path "\\tervis.prv\departments\IT\IT Shared\Adan\Store Lids Project\FinalUPCSet.csv"
     Write-Verbose "Getting Store DB name"
@@ -1414,9 +1381,9 @@ INSERT INTO InventoryTransferLog (
     WHERE
         ID = '$ID'
     ),
-    0, 
-    1, 
-    1, 
+    0,
+    1,
+    5,
     '$Cost'
 )
 "@
