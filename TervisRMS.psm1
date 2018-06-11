@@ -1502,3 +1502,46 @@ exec sp_executesql N'SET NOCOUNT OFF;
     Write-Verbose "Adding $Description to $DatabaseName"
     Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $AddTenderTypeQuery
 }
+
+function Add-TervisRMSCustomButton {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]$ComputerName,
+        $Caption = "",        
+        $Number = 0,
+        $Style = 0,
+        $Command = "",
+        $Description = "",
+        $Picture = "",
+        $UseMask = 0
+    )
+
+    Write-Verbose "Getting Store DB name"
+    $DatabaseName = Get-RMSDatabaseName -ComputerName $ComputerName | Select-Object -ExpandProperty RMSDatabaseName
+
+    $AddCustomPOSButtonQuery = @"
+exec sp_executesql 
+    N'SET NOCOUNT OFF; 
+        INSERT INTO "CustomButtons" (
+            "Caption",        
+            "Number",
+            "Style",
+            "Command",
+            "Description",
+            "Picture",
+            "UseMask") 
+        VALUES (@P1,
+            @P2,
+            @P3,
+            @P4,
+            @P5,
+            @P6,
+            @P7); 
+        SELECT SCOPE_IDENTITY() AS SCOPE_ID_COLUMN',
+    N'@P1 nvarchar(50),@P2 int,@P3 int,@P4 nvarchar(255),@P5 nvarchar(50),@P6 image,@P7 bit',
+    N'$Caption',$Number,$Style,N'$Command',N'$Description',$Picture,$UseMask
+"@
+
+    Write-Verbose "Adding Custom POS Button $Description to $DatabaseName"
+    Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $AddCustomPOSButtonQuery
+}
