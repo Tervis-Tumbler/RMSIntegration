@@ -1439,6 +1439,7 @@ function Add-TervisRMSTenderType {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]$ComputerName,
+        [Parameter(Mandatory)]$DatabaseName,
         [Parameter(Mandatory)]$Description,
         [Parameter(Mandatory)]$Code,
         $AdditionalDetailType = 0,
@@ -1463,9 +1464,6 @@ function Add-TervisRMSTenderType {
         $CashBackLimit = 0.0000,
         $CashBackFee  = 0.0000
     )
-
-    Write-Verbose "Getting Store DB name"
-    $DatabaseName = Get-RMSDatabaseName -ComputerName $ComputerName | Select-Object -ExpandProperty RMSDatabaseName
 
     $AddTenderTypeQuery = @"
 exec sp_executesql N'SET NOCOUNT OFF; 
@@ -1507,6 +1505,7 @@ function Add-TervisRMSCustomButton {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]$ComputerName,
+        [Parameter(Mandatory)]$DatabaseName,
         $Caption = "",        
         $Number = 0,
         $Style = 0,
@@ -1515,9 +1514,6 @@ function Add-TervisRMSCustomButton {
         $Picture = "",
         $UseMask = 0
     )
-
-    Write-Verbose "Getting Store DB name"
-    $DatabaseName = Get-RMSDatabaseName -ComputerName $ComputerName | Select-Object -ExpandProperty RMSDatabaseName
 
     $AddCustomPOSButtonQuery = @"
 exec sp_executesql 
