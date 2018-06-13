@@ -1491,8 +1491,7 @@ exec sp_executesql N'SET NOCOUNT OFF;
         "SupportCashBack",
         "CashBackLimit",
         "CashBackFee") 
-    VALUES (@P1,@P2,@P3,@P4,@P5,@P6,@P7,@P8,@P9,@P10,@P11,@P12,@P13,@P14,@P15,@P16,@P17,@P18,@P19,@P20,@P21,@P22,@P23);
-    SELECT SCOPE_IDENTITY() AS SCOPE_ID_COLUMN',
+    VALUES (@P1,@P2,@P3,@P4,@P5,@P6,@P7,@P8,@P9,@P10,@P11,@P12,@P13,@P14,@P15,@P16,@P17,@P18,@P19,@P20,@P21,@P22,@P23)',
     N'@P1 nvarchar(22),@P2 smallint,@P3 smallint,@P4 bit,@P5 nvarchar(1),@P6 nvarchar(1),@P7 nvarchar(1),@P8 int,@P9 bit,@P10 bit,@P11 nvarchar(5),@P12 money,@P13 money,@P14 bit,@P15 int,@P16 int,@P17 nvarchar(1),@P18 bit,@P19 bit,@P20 money,@P21 bit,@P22 money,@P23 money',
     N'$Description',$AdditionalDetailType,$ScanCode,$PrinterValidation,N'$ValidationLine1',N'$ValidationLine2',N'$ValidationLine3',$VerificationType,$VerifyViaEDC,$PreventOverTendering,N'$Code',$RoundToValue,$MaximumAmount,$DoNotPopCashDrawer,$CurrencyID,$DisplayOrder,N'$ValidationMask',$SignatureRequired,$AllowMultipleEntries,$DebitSurcharge,$SupportCashBack,$CashBackLimit,$CashBackFee
 "@
@@ -1532,8 +1531,7 @@ exec sp_executesql
             @P4,
             @P5,
             @P6,
-            @P7); 
-        SELECT SCOPE_IDENTITY() AS SCOPE_ID_COLUMN',
+            @P7)',
     N'@P1 nvarchar(50),@P2 int,@P3 int,@P4 nvarchar(255),@P5 nvarchar(50),@P6 image,@P7 bit',
     N'$Caption',$Number,$Style,N'$Command',N'$Description',$Picture,$UseMask
 "@
