@@ -1195,7 +1195,7 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
     Write-Verbose "Importing CSV"
     $CSVObject = Import-Csv -Path $PathToCSV
     
-    Write-Verbose "Getting Store DB name"
+    Write-Verbose "DB Query - Get RMSDatabaseName"
     $DatabaseName = Get-RMSDatabaseName -ComputerName $ComputerName | Select-Object -ExpandProperty RMSDatabaseName
     
     $InvokeRMSSQLParameters = @{
@@ -1210,19 +1210,17 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
         throw "Item codes in CSV are not unique one-to-one combinations."
     }
 
-    Write-Verbose "Building Unlidded/Lidded Quantity table"
+    Write-Verbose "Building Table - FinalUPCSet"
     $FinalUPCSet = $UnliddedItemResult | ForEach-Object {
         $ReferenceLiddedItemUPC = $IndexedCSV["$($_.ItemLookupCode)"].LiddedItem
         [PSCustomObject]@{
             $UnliddedItemColumnName = $_.ItemLookupCode
             $LiddedItemColumnName = $ReferenceLiddedItemUPC
             Quantity = $_.Quantity
-
         }
     }
     
-    Write-Verbose "Building supermassive final query"
-
+    Write-Verbose "Building Query Array - UpdateItemQueryArray"
     $FinalUPCSet | ForEach-Object {
         $UpdateItemQuery = @"
 UPDATE Item
@@ -1233,15 +1231,38 @@ WHERE ItemLookupCode = '$($_.$LiddedItemColumnName)' AND Quantity = 0
 "@
         $UpdateItemQueryArray += $UpdateItemQuery
     }
+    $UpdateItemQueryArray
+
+    $FinalUPCSet.UnliddedItem | ForEach-Object {
+        $SetItemToZeroQuery = @"
+UPDATE Item
+SET Quantity = 0, LastUpdated = GETDATE()
+WHERE ItemLookupCode = '$_' AND Quantity > 0
+
+
+"@
+        $SetItemToZeroQueryArray += $SetItemToZeroQuery
+    }
+    $SetItemToZeroQueryArray
+
+    Write-Verbose "Building Query - InventoryTransferLogQuery for Lidded"
+    $InventoryTransferLogQueryLidded = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $LiddedItemColumnName -SQLServerName $ComputerName -DatabaseName $DatabaseName -Verbose
     
-    Write-Verbose "Building RMS Inventory Transfer Log query"
-    $InventoryTransferLogQuery = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $LiddedItemColumnName -SQLServerName $ComputerName -DatabaseName $DatabaseName -Verbose
-    
-    Write-Verbose "Querying DB with updates"
+    Write-Verbose "Building Query - InventoryTransferLogQuery for Unlidded"
+    $InventoryTransferLogQueryUnlidded = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $UnliddedItemColumnName -SQLServerName $ComputerName -DatabaseName $DatabaseName -Verbose
+
+
+    Write-Verbose "DB Query - Setting lidded item quantities"
     Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $UpdateItemQueryArray
 
-    Write-Verbose "Querying DB with Inventory Transfer Log"
-    Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $InventoryTransferLogQuery
+    Write-Verbose "DB Query - Setting unlidded items to ZERO"
+    Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SetItemToZeroQueryArray
+
+    Write-Verbose "DB Query - Inserting InventoryTransferLogs for Lidded"
+    Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $InventoryTransferLogQueryLidded
+    
+    Write-Verbose "DB Query - Inserting InventoryTransferLogs for Unlidded"
+    Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $InventoryTransferLogQueryUnlidded
 }
 
 function Invoke-RMSSetUnliddedItemQuantitiesToZero{
