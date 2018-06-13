@@ -1265,6 +1265,7 @@ WHERE ItemLookupCode = '$_' AND Quantity > 0
     Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $InventoryTransferLogQueryUnlidded
 }
 
+<#
 function Invoke-RMSSetUnliddedItemQuantitiesToZero{
     [CmdletBinding()]
     param(
@@ -1292,6 +1293,7 @@ WHERE ItemLookupCode = '$_' AND Quantity > 0
     $SupermassiveFinalQuery
     #Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SupermassiveFinalQuery
 }
+#>
 
 function Get-ItemFromRMSHQDB{
     param(
