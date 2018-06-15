@@ -1192,6 +1192,7 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
         [parameter(mandatory)]$UnliddedItemColumnName,
         [parameter(mandatory)]$LidItemColumnName,
         [parameter(mandatory)]$LidItemQuantityColumnName,
+        [switch]$PrimeSQL,
         [switch]$ExecuteSQL
     )
 
@@ -1263,7 +1264,7 @@ WHERE ItemLookupCode = '$_' AND Quantity > 0
     Write-Verbose "Building Query - InventoryTransferLogQuery for Unlidded"
     $InventoryTransferLogQueryUnlidded = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $UnliddedItemColumnName -SQLServerName $ComputerName -DatabaseName $DatabaseName -Verbose
 
-    if ($ExecuteSQL) {
+    if ($PrimeSQL -and $ExecuteSQL) {
         Write-Verbose "DB Query - Setting lidded item quantities"
         Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $UpdateItemQueryArray
     
