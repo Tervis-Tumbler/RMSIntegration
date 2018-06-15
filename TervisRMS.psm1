@@ -1260,9 +1260,11 @@ WHERE ItemLookupCode = '$_' AND Quantity > 0
 
     Write-Verbose "Building Query - InventoryTransferLogQuery for Lidded"
     $InventoryTransferLogQueryLidded = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $LiddedItemColumnName -SQLServerName $ComputerName -DatabaseName $DatabaseName -Verbose
-    
+    $InventoryTransferLogQueryLidded
+
     Write-Verbose "Building Query - InventoryTransferLogQuery for Unlidded"
     $InventoryTransferLogQueryUnlidded = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $UnliddedItemColumnName -SQLServerName $ComputerName -DatabaseName $DatabaseName -Verbose
+    $InventoryTransferLogQueryUnlidded
 
     if ($PrimeSQL -and $ExecuteSQL) {
         Write-Verbose "DB Query - Setting lidded item quantities"
