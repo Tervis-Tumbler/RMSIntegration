@@ -1189,7 +1189,9 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
         [parameter(mandatory)]$ComputerName,
         [parameter(mandatory)]$PathToCSV,
         [parameter(mandatory)]$LiddedItemColumnName,
-        [parameter(mandatory)]$UnliddedItemColumnName
+        [parameter(mandatory)]$UnliddedItemColumnName,
+        [parameter(mandatory)]$LidItemColumnName,
+        [parameter(mandatory)]$LidItemQuantityColumnName
     )
 
     Write-Verbose "Importing CSV"
@@ -1204,8 +1206,14 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
     }
 
     $UnliddedItemResult = Get-RMSItemsUsingCSV -CSVObject $CSVObject -CSVColumnName $UnliddedItemColumnName @InvokeRMSSQLParameters
+    #$LidItemResult = Get-RMSItemsUsingCSV -CSVObject $CSVObject -CSVColumnName $LidItemColumnName @InvokeRMSSQLParameters
+    #$LidItemResult | $CSVObject.LidItemQuantity | Where $CSVObject.LidItem -EQ $LidItemResult.ItemLookupCode
+
+    #Write-Verbose "Adding lid item quantities to CSV object"
+    #$CSVObject = Add-LidItemQuantityToCSV @PSBoundParameters -CSVObject $CSVObject
+
     try {
-        $IndexedCSV = $CSVObject | ConvertTo-IndexedHashtable -PropertyToIndex "UnliddedItem" -ErrorAction Stop
+        $IndexedCSV = $CSVObject | ConvertTo-IndexedHashtable -PropertyToIndex $UnliddedItemColumnName -ErrorAction Stop
     } catch {
         throw "Item codes in CSV are not unique one-to-one combinations."
     }
@@ -1213,12 +1221,19 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
     Write-Verbose "Building Table - FinalUPCSet"
     $FinalUPCSet = $UnliddedItemResult | ForEach-Object {
         $ReferenceLiddedItemUPC = $IndexedCSV["$($_.ItemLookupCode)"].LiddedItem
+        $ReferenceLidItemUPC = $IndexedCSV["$($_.ItemLookupCode)"].LidItem
+        $ReferenceLidItemQuantity = $IndexedCSV["$($_.ItemLookupCode)"].LidItemQuantity
         [PSCustomObject]@{
             $UnliddedItemColumnName = $_.ItemLookupCode
             $LiddedItemColumnName = $ReferenceLiddedItemUPC
             Quantity = $_.Quantity
+            LidItem = $ReferenceLidItemUPC
+            LidItemQuantity = $ReferenceLidItemQuantity
         }
     }
+    Write-Verbose "Building LidItemHashTable"
+    $LidItemHashTable = New-LidItemQuantityHashTable -FinalUPCSet $FinalUPCSet
+    
     
     Write-Verbose "Building Query Array - UpdateItemQueryArray"
     $FinalUPCSet | ForEach-Object {
@@ -1251,7 +1266,7 @@ WHERE ItemLookupCode = '$_' AND Quantity > 0
     Write-Verbose "Building Query - InventoryTransferLogQuery for Unlidded"
     $InventoryTransferLogQueryUnlidded = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $UnliddedItemColumnName -SQLServerName $ComputerName -DatabaseName $DatabaseName -Verbose
 
-
+<#
     Write-Verbose "DB Query - Setting lidded item quantities"
     Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $UpdateItemQueryArray
 
@@ -1263,37 +1278,56 @@ WHERE ItemLookupCode = '$_' AND Quantity > 0
     
     Write-Verbose "DB Query - Inserting InventoryTransferLogs for Unlidded"
     Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $InventoryTransferLogQueryUnlidded
+    #>
+    Write-Verbose "This stupid thing kept going"
 }
 
 <#
-function Invoke-RMSSetUnliddedItemQuantitiesToZero{
-    [CmdletBinding()]
+function Add-LidItemQuantityToCSV {
     param(
-        [parameter(mandatory)]$ComputerName)
-    Write-Verbose "Importing CSV"
-    $FinalUPCSet = Import-Csv -Path "\\tervis.prv\departments\IT\IT Shared\Adan\Store Lids Project\FinalUPCSet.csv"
-    Write-Verbose "Getting Store DB name"
-    $DatabaseName = Get-RMSDatabaseName -ComputerName $ComputerName | Select-Object -ExpandProperty RMSDatabaseName
-
-    Write-Verbose "Building supermassive final query"
-
-    $SupermassiveFinalQuery = ""
-    $FinalUPCSet.UnliddedItemUPC | ForEach-Object {
-        $Query = @"
-UPDATE Item
-SET Quantity = 0, LastUpdated = GETDATE()
-WHERE ItemLookupCode = '$_' AND Quantity > 0
-
-
-"@
-        $SupermassiveFinalQuery += $Query
+        [parameter(mandatory)]$ComputerName,
+        [parameter(mandatory)]$CSVObject,
+        [parameter(mandatory)]$LidItemColumnName,
+        [parameter(mandatory)]$LidItemQuantityColumnName
+    )
+    
+    try {
+        $IndexedCSV = $CSVObject | ConvertTo-IndexedHashtable -PropertyToIndex $LidItemColumnName -ErrorAction Stop
+    } catch {
+        throw "Item codes in CSV are not unique one-to-one combinations."
     }
 
-    Write-Verbose "Querying DB with updates"
-    $SupermassiveFinalQuery
-    #Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SupermassiveFinalQuery
+    $InvokeRMSSQLParameters = @{
+        DatabaseName = Get-RMSDatabaseName -ComputerName $ComputerName | Select-Object -ExpandProperty RMSDatabaseName
+        SQLServerName = $ComputerName
+        CSVObject = $CSVObject
+        CSVColumnName = $LidItemColumnName
+    }
+    $LidItemResult = Get-RMSItemsUsingCSV @InvokeRMSSQLParameters
+
+    $CSVObject = $LidItemResult | ForEach-Object {
+        $IndexedCSV["$($_.$LidItemColumnName)"].$LidItemQuantityColumnName = $_.Quantity
+    }
+
+    $IndexedCSV.Values
 }
 #>
+
+function New-LidItemQuantityHashTable {
+    param (
+        $FinalUPCSet
+    )
+
+    $LidItemUniqueItemCodes = $FinalUPCSet | Select-Object -ExpandProperty LidItem -Unique
+    [hashtable]$LidItemHashTable = @{}
+    $LidItemUniqueItemCodes | ForEach-Object {$LidItemHashTable += @{$_=0}}
+
+    $FinalUPCSet | ForEach-Object {
+        $LidItemHashTable[$_.LidItem] = $LidItemHashTable[$_.LidItem] + $_.Quantity
+    }
+
+    $LidItemHashTable    
+}
 
 function Get-ItemFromRMSHQDB{
     param(
