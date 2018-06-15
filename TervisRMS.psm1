@@ -1213,11 +1213,7 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
     #Write-Verbose "Adding lid item quantities to CSV object"
     #$CSVObject = Add-LidItemQuantityToCSV @PSBoundParameters -CSVObject $CSVObject
 
-    try {
-        $IndexedCSV = $CSVObject | ConvertTo-IndexedHashtable -PropertyToIndex $UnliddedItemColumnName -ErrorAction Stop
-    } catch {
-        throw "Item codes in CSV are not unique one-to-one combinations."
-    }
+    $IndexedCSV = $CSVObject | ConvertTo-IndexedHashtable -PropertyToIndex $UnliddedItemColumnName 
 
     Write-Verbose "Building Table - FinalUPCSet"
     $FinalUPCSet = $UnliddedItemResult | ForEach-Object {
@@ -1485,8 +1481,13 @@ function ConvertTo-IndexedHashtable {
         $HashTable = @{}
     }
     process {
-        $HashTable += @{
-            $InputObject.$PropertyToIndex = $InputObject
+        try {
+            $HashTable += @{
+                $InputObject.$PropertyToIndex = $InputObject
+            }
+        }
+        catch {
+            Write-Warning "$($InputObject.$PropertyToIndex) could not be added to the index."
         }
     }
     end {
