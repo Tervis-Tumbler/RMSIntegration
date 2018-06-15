@@ -1191,7 +1191,8 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
         [parameter(mandatory)]$LiddedItemColumnName,
         [parameter(mandatory)]$UnliddedItemColumnName,
         [parameter(mandatory)]$LidItemColumnName,
-        [parameter(mandatory)]$LidItemQuantityColumnName
+        [parameter(mandatory)]$LidItemQuantityColumnName,
+        [switch]$ExecuteSQL
     )
 
     Write-Verbose "Importing CSV"
@@ -1266,20 +1267,21 @@ WHERE ItemLookupCode = '$_' AND Quantity > 0
     Write-Verbose "Building Query - InventoryTransferLogQuery for Unlidded"
     $InventoryTransferLogQueryUnlidded = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $UnliddedItemColumnName -SQLServerName $ComputerName -DatabaseName $DatabaseName -Verbose
 
-<#
-    Write-Verbose "DB Query - Setting lidded item quantities"
-    Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $UpdateItemQueryArray
-
-    Write-Verbose "DB Query - Setting unlidded items to ZERO"
-    Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SetItemToZeroQueryArray
-
-    Write-Verbose "DB Query - Inserting InventoryTransferLogs for Lidded"
-    Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $InventoryTransferLogQueryLidded
+    if ($ExecuteSQL) {
+        Write-Verbose "DB Query - Setting lidded item quantities"
+        Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $UpdateItemQueryArray
     
-    Write-Verbose "DB Query - Inserting InventoryTransferLogs for Unlidded"
-    Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $InventoryTransferLogQueryUnlidded
-    #>
-    Write-Verbose "This stupid thing kept going"
+        Write-Verbose "DB Query - Setting unlidded items to ZERO"
+        Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SetItemToZeroQueryArray
+    
+        Write-Verbose "DB Query - Inserting InventoryTransferLogs for Lidded"
+        Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $InventoryTransferLogQueryLidded
+        
+        Write-Verbose "DB Query - Inserting InventoryTransferLogs for Unlidded"
+        Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $InventoryTransferLogQueryUnlidded
+    } else {
+        Write-Warning "ExecuteSQL parameter not set. No changes have been made to the database."
+    }
 }
 
 <#
