@@ -1183,44 +1183,322 @@ select transactionnumber,customerid from [transaction] where dbtimestamp > $DBTi
     Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SQLServerName -Query $Query
 }
 
-function Invoke-RMSSQLTransferItemQTYFromNonLiddedToLidded{
-    [cmdletbinding()]
+function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
+    [CmdletBinding()]
     param(
-#        [parameter(mandatory)]$AliasItemNumber,
-        [parameter(mandatory)]$SqlServerName,
-        [parameter(mandatory)]$CSVDirectory
+        [parameter(mandatory)]$ComputerName,
+        [parameter(mandatory)]$PathToCSV,
+        [parameter(mandatory)]$LiddedItemColumnName,
+        [parameter(mandatory)]$UnliddedItemColumnName,
+        [parameter(mandatory)]$LidItemColumnName,
+        [parameter(mandatory)]$LidItemQuantityColumnName,
+        [switch]$PrimeSQL,
+        [switch]$ExecuteSQL
     )
-    $ItemList = Import-Csv -Path $CSVDirectory
-    $NonLiddedItemNumbers = $ItemList.NonLiddedItemNumbers
 
-    $DataBaseName = Get-RMSDatabaseName -ComputerName $SqlServerName | select -ExpandProperty RMSDatabaseName
+    Write-Verbose "Importing CSV"
+    $CSVObject = Import-Csv -Path $PathToCSV
+    
+    Write-Verbose "DB Query - Get RMSDatabaseName"
+    $DatabaseName = Get-RMSDatabaseName -ComputerName $ComputerName | Select-Object -ExpandProperty RMSDatabaseName
+    
+    $InvokeRMSSQLParameters = @{
+        DatabaseName = $DatabaseName
+        SQLServerName = $ComputerName
+    }
 
-    foreach ($NonLiddedItemNumber in $NonLiddedItemNumbers){
-        $QueryGetItemIDCorrespondingToAlias = @"
-SELECT 
-[ItemID],
-[Alias]
+    $UnliddedItemResult = Get-RMSItemsUsingCSV -CSVObject $CSVObject -CSVColumnName $UnliddedItemColumnName @InvokeRMSSQLParameters
+    #$LidItemResult = Get-RMSItemsUsingCSV -CSVObject $CSVObject -CSVColumnName $LidItemColumnName @InvokeRMSSQLParameters
+    #$LidItemResult | $CSVObject.LidItemQuantity | Where $CSVObject.LidItem -EQ $LidItemResult.ItemLookupCode
+
+    #Write-Verbose "Adding lid item quantities to CSV object"
+    #$CSVObject = Add-LidItemQuantityToCSV @PSBoundParameters -CSVObject $CSVObject
+
+    $IndexedCSV = $CSVObject | ConvertTo-IndexedHashtable -PropertyToIndex $UnliddedItemColumnName 
+
+    Write-Verbose "Building Table - FinalUPCSet"
+    $FinalUPCSet = $UnliddedItemResult | ForEach-Object {
+        $ReferenceLiddedItemUPC = $IndexedCSV["$($_.ItemLookupCode)"].LiddedItem
+        $ReferenceLidItemUPC = $IndexedCSV["$($_.ItemLookupCode)"].LidItem
+        $ReferenceLidItemQuantity = $IndexedCSV["$($_.ItemLookupCode)"].LidItemQuantity
+        [PSCustomObject]@{
+            $UnliddedItemColumnName = $_.ItemLookupCode
+            $LiddedItemColumnName = $ReferenceLiddedItemUPC
+            Quantity = $_.Quantity
+            LidItem = $ReferenceLidItemUPC
+            LidItemQuantity = $ReferenceLidItemQuantity
+        }
+    }
+    Write-Verbose "Building LidItemHashTable"
+    $LidItemHashTable = New-LidItemQuantityHashTable -FinalUPCSet $FinalUPCSet
+    
+    
+    Write-Verbose "Building Query Array - UpdateItemQueryArray"
+    $FinalUPCSet | ForEach-Object {
+        $UpdateItemQuery = @"
+UPDATE Item
+SET Quantity = $($_.Quantity), LastUpdated = GETDATE() 
+WHERE ItemLookupCode = '$($_.$LiddedItemColumnName)' AND Quantity = 0
+
+
+"@
+        $UpdateItemQueryArray += $UpdateItemQuery
+    }
+    $UpdateItemQueryArray
+
+    $FinalUPCSet.UnliddedItem | ForEach-Object {
+        $SetItemToZeroQuery = @"
+UPDATE Item
+SET Quantity = 0, LastUpdated = GETDATE()
+WHERE ItemLookupCode = '$_' AND Quantity > 0
+
+
+"@
+        $SetItemToZeroQueryArray += $SetItemToZeroQuery
+    }
+    $SetItemToZeroQueryArray
+
+    Write-Verbose "Building Query - InventoryTransferLogQuery for Lidded"
+    $InventoryTransferLogQueryLidded = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $LiddedItemColumnName -SQLServerName $ComputerName -DatabaseName $DatabaseName -Verbose
+    $InventoryTransferLogQueryLidded
+
+    Write-Verbose "Building Query - InventoryTransferLogQuery for Unlidded"
+    $InventoryTransferLogQueryUnlidded = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $UnliddedItemColumnName -SQLServerName $ComputerName -DatabaseName $DatabaseName -Verbose
+    $InventoryTransferLogQueryUnlidded
+
+    if ($PrimeSQL -and $ExecuteSQL) {
+        Write-Verbose "DB Query - Setting lidded item quantities"
+        Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $UpdateItemQueryArray
+    
+        Write-Verbose "DB Query - Setting unlidded items to ZERO"
+        Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SetItemToZeroQueryArray
+    
+        Write-Verbose "DB Query - Inserting InventoryTransferLogs for Lidded"
+        Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $InventoryTransferLogQueryLidded
+        
+        Write-Verbose "DB Query - Inserting InventoryTransferLogs for Unlidded"
+        Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $InventoryTransferLogQueryUnlidded
+    } else {
+        Write-Warning "ExecuteSQL parameter not set. No changes have been made to the database."
+    }
+}
+
+<#
+function Add-LidItemQuantityToCSV {
+    param(
+        [parameter(mandatory)]$ComputerName,
+        [parameter(mandatory)]$CSVObject,
+        [parameter(mandatory)]$LidItemColumnName,
+        [parameter(mandatory)]$LidItemQuantityColumnName
+    )
+    
+    try {
+        $IndexedCSV = $CSVObject | ConvertTo-IndexedHashtable -PropertyToIndex $LidItemColumnName -ErrorAction Stop
+    } catch {
+        throw "Item codes in CSV are not unique one-to-one combinations."
+    }
+
+    $InvokeRMSSQLParameters = @{
+        DatabaseName = Get-RMSDatabaseName -ComputerName $ComputerName | Select-Object -ExpandProperty RMSDatabaseName
+        SQLServerName = $ComputerName
+        CSVObject = $CSVObject
+        CSVColumnName = $LidItemColumnName
+    }
+    $LidItemResult = Get-RMSItemsUsingCSV @InvokeRMSSQLParameters
+
+    $CSVObject = $LidItemResult | ForEach-Object {
+        $IndexedCSV["$($_.$LidItemColumnName)"].$LidItemQuantityColumnName = $_.Quantity
+    }
+
+    $IndexedCSV.Values
+}
+#>
+
+function New-LidItemQuantityHashTable {
+    param (
+        $FinalUPCSet
+    )
+
+    $LidItemUniqueItemCodes = $FinalUPCSet | Select-Object -ExpandProperty LidItem -Unique
+    [hashtable]$LidItemHashTable = @{}
+    $LidItemUniqueItemCodes | ForEach-Object {$LidItemHashTable += @{$_=0}}
+
+    $FinalUPCSet | ForEach-Object {
+        $LidItemHashTable[$_.LidItem] = $LidItemHashTable[$_.LidItem] + $_.Quantity
+    }
+
+    $LidItemHashTable    
+}
+
+function Get-ItemFromRMSHQDB{
+    param(
+      [parameter(mandatory)][string]$UPCorEBSItemNumber
+    )
+    $ComputerName = "SQL"
+    $DataBaseName = "TERVIS_RMSHQ1"
+    if ($UPCorEBSItemNumber.length -eq 7){
+        $SqlQueryGetItemIDFromAlias = @"
+SELECT ItemID
 FROM Alias
-Where Alias = '$NonLiddedItemNumber'
+WHERE Alias = '$UPCorEBSItemNumber'
 "@
 
-        $ItemID = Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SQLServerName -Query $QueryGetItemIDCorrespondingToAlias | select -ExpandProperty ItemID
-
-        $QueryGetQuantityCorrespondingToItemID = @"
-SELECT
-[ID],
-[HQID],
-[ExtendedDescription],
-[ItemLookupCode],
-[Quantity]
+        $ItemID = Invoke-MSSQL -Server $ComputerName -Database $DataBaseName -SQLCommand $SqlQueryGetItemIDFromAlias -ConvertFromDataRow | select -ExpandProperty ItemID
+        $SqlQuery = @"
+SELECT ID, HQID, ItemLookupCode, Quantity, Price, Description 
 FROM Item
 WHERE ID = '$ItemID'
 "@
 
-        $NonLiddedItemQuantity = Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SqlServerName -Query $QueryGetQuantityCorrespondingToItemID | select -ExpandProperty Quantity
-        Write-Output "ItemID:$ItemID Quantity:$NonLiddedItemQuantity"
-    }
+        Invoke-MSSQL -Database $DataBaseName -Server $ComputerName -SQLCommand $SqlQuery
+    } elseif ($UPCorEBSItemNumber.length -eq 12){
+        $SqlQuery = @"
+SELECT ID, HQID, ItemLookupCode, Quantity, Price, Description 
+FROM Item
+WHERE ItemLookupCode = '$UPCorEBSItemNumber'
+"@
+        Invoke-MSSQL -Database $DataBaseName -Server $ComputerName -SQLCommand $SqlQuery
+    }   
+}
 
+<#
+function Invoke-RMSInventoryTransferLogQueryCreate {
+    param(
+        [parameter(Mandatory)][PSCustomObject]$CSVObject,
+        [parameter(Mandatory)]$CSVColumnName,
+        [parameter(Mandatory)]$SQLServerName,
+        [parameter(Mandatory)]$DatabaseName
+    )
+    $Items = Get-RMSItemsUsingCSV @PSBoundParameters
+    
+    foreach ($Item in $Items) {
+        $InventoryTransferLog = @"
+INSERT INTO InventoryTransferLog" (
+    "ItemID",
+    "DetailID",
+    "Quantity",
+    "DateTransferred",
+    "ReasonCodeID",
+    "CashierID",
+    "Type",
+    "Cost"
+) VALUES (
+    '$($Item.ID)',
+    '0',
+    '$($Item.Quantity)', 
+    '$($Item.LastUpdated)', 
+    0, 
+    1, 
+    1, 
+    '$($Item.Cost)'
+)
+"@
+        $InventoryTransferLogArray += $InventoryTransferLog
+    }
+    $InventoryTransferLogArray
+}
+#>
+function Invoke-RMSInventoryTransferLogThing {
+    param(
+        [parameter(Mandatory)][PSCustomObject]$CSVObject,
+        [parameter(Mandatory)]$CSVColumnName,
+        [parameter(Mandatory)]$SQLServerName,
+        [parameter(Mandatory)]$DatabaseName
+    )
+    $Items = Get-RMSItemsUsingCSV @PSBoundParameters
+    $Items | New-RMSInventoryTransferLogQuery
+}
+
+function New-RMSInventoryTransferLogQuery {
+    param(
+        [parameter(Mandatory,ValueFromPipelineByPropertyName)]$ID,
+        [parameter(Mandatory,ValueFromPipelineByPropertyName)]$Quantity,
+        [parameter(Mandatory,ValueFromPipelineByPropertyName)]$LastUpdated,
+        [parameter(Mandatory,ValueFromPipelineByPropertyName)]$Cost
+    )
+
+    process {
+@"
+INSERT INTO InventoryTransferLog (
+    "ItemID",
+    "DetailID",
+    "Quantity",
+    "DateTransferred",
+    "ReasonCodeID",
+    "CashierID",
+    "Type",
+    "Cost"
+) VALUES (
+    '$ID',
+    '0',
+    '$Quantity',
+    (SELECT 
+        LastUpdated
+    FROM
+        Item
+    WHERE
+        ID = '$ID'
+    ),
+    0,
+    1,
+    5,
+    '$Cost'
+)
+"@
+    }
+}
+
+function Get-RMSItemsUsingCSV {
+    param(
+        [cmdletbinding()]
+        [parameter(Mandatory)][PSCustomObject]$CSVObject,
+        [parameter(Mandatory)][string]$CSVColumnName,
+        [parameter(Mandatory)][string]$SQLServerName,
+        [parameter(Mandatory)][string]$DatabaseName
+    )
+
+    $ItemArray = ConvertTo-SQLArrayFromCSV -CSVObject $CSVObject -CSVColumnName $CSVColumnName
+
+    $SQLCommand = @"
+SELECT
+    ItemLookupCode,
+    ID,
+    Quantity,
+    Cost,
+    LastUpdated
+FROM
+    Item
+WHERE 
+    ItemLookupCode in $ItemArray
+"@
+
+    Invoke-MSSQL -Server $SQLServerName -Database $DatabaseName -SQLCommand $SQLCommand
+}
+
+function ConvertTo-IndexedHashtable {
+    param (
+        [Parameter(Mandatory,ValueFromPipeline)]$InputObject,
+        [Parameter(Mandatory)]$PropertyToIndex
+    )
+    begin {
+        $HashTable = @{}
+    }
+    process {
+        try {
+            $HashTable += @{
+                $InputObject.$PropertyToIndex = $InputObject
+            }
+        }
+        catch {
+            Write-Warning "$($InputObject.$PropertyToIndex) could not be added to the index."
+        }
+    }
+    end {
+        $HashTable
+    }
+}
+
+<<<<<<< HEAD
 }
 
 function ConvertFrom-EBSItemNumberToUPC {
@@ -1256,4 +1534,109 @@ WHERE Alias.Alias IN $AliasNumberSQLArray
         }
     }
 
+=======
+function Add-TervisRMSTenderType {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]$ComputerName,
+        [Parameter(Mandatory)]$DatabaseName,
+        [Parameter(Mandatory)]$Description,
+        [Parameter(Mandatory)]$Code,
+        $AdditionalDetailType = 0,
+        $ScanCode = 0,
+        $PrinterValidation = 0,
+        $ValidationLine1,
+        $ValidationLine2,
+        $ValidationLine3,
+        $VerificationType = 0,
+        $VerifyViaEDC = 0,
+        $PreventOverTendering = 0,
+        $RoundToValue = 0.0000,
+        $MaximumAmount = 0.0000,
+        $DoNotPopCashDrawer = 0,
+        $CurrencyID = 0,
+        $DisplayOrder = 0,
+        $ValidationMask,
+        $SignatureRequired = 0,
+        $AllowMultipleEntries = 0,
+        $DebitSurcharge = 0.0000,
+        $SupportCashBack = 0,
+        $CashBackLimit = 0.0000,
+        $CashBackFee  = 0.0000
+    )
+
+    $AddTenderTypeQuery = @"
+exec sp_executesql N'SET NOCOUNT OFF; 
+    INSERT INTO "Tender" (
+        "Description",
+        "AdditionalDetailType",
+        "ScanCode",
+        "PrinterValidation",
+        "ValidationLine1",
+        "ValidationLine2",
+        "ValidationLine3",
+        "VerificationType",
+        "VerifyViaEDC",
+        "PreventOverTendering",
+        "Code",
+        "RoundToValue",
+        "MaximumAmount",
+        "DoNotPopCashDrawer",
+        "CurrencyID",
+        "DisplayOrder",
+        "ValidationMask",
+        "SignatureRequired",
+        "AllowMultipleEntries",
+        "DebitSurcharge",
+        "SupportCashBack",
+        "CashBackLimit",
+        "CashBackFee") 
+    VALUES (@P1,@P2,@P3,@P4,@P5,@P6,@P7,@P8,@P9,@P10,@P11,@P12,@P13,@P14,@P15,@P16,@P17,@P18,@P19,@P20,@P21,@P22,@P23)',
+    N'@P1 nvarchar(22),@P2 smallint,@P3 smallint,@P4 bit,@P5 nvarchar(1),@P6 nvarchar(1),@P7 nvarchar(1),@P8 int,@P9 bit,@P10 bit,@P11 nvarchar(5),@P12 money,@P13 money,@P14 bit,@P15 int,@P16 int,@P17 nvarchar(1),@P18 bit,@P19 bit,@P20 money,@P21 bit,@P22 money,@P23 money',
+    N'$Description',$AdditionalDetailType,$ScanCode,$PrinterValidation,N'$ValidationLine1',N'$ValidationLine2',N'$ValidationLine3',$VerificationType,$VerifyViaEDC,$PreventOverTendering,N'$Code',$RoundToValue,$MaximumAmount,$DoNotPopCashDrawer,$CurrencyID,$DisplayOrder,N'$ValidationMask',$SignatureRequired,$AllowMultipleEntries,$DebitSurcharge,$SupportCashBack,$CashBackLimit,$CashBackFee
+"@
+
+    Write-Verbose "Adding $Description to $DatabaseName"
+    Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $AddTenderTypeQuery
+}
+
+function Add-TervisRMSCustomButton {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]$ComputerName,
+        [Parameter(Mandatory)]$DatabaseName,
+        $Caption = "",        
+        $Number = 0,
+        $Style = 0,
+        $Command = "",
+        $Description = "",
+        $Picture = "",
+        $UseMask = 0
+    )
+
+    $AddCustomPOSButtonQuery = @"
+exec sp_executesql 
+    N'SET NOCOUNT OFF; 
+        INSERT INTO "CustomButtons" (
+            "Caption",        
+            "Number",
+            "Style",
+            "Command",
+            "Description",
+            "Picture",
+            "UseMask") 
+        VALUES (@P1,
+            @P2,
+            @P3,
+            @P4,
+            @P5,
+            @P6,
+            @P7)',
+    N'@P1 nvarchar(50),@P2 int,@P3 int,@P4 nvarchar(255),@P5 nvarchar(50),@P6 image,@P7 bit',
+    N'$Caption',$Number,$Style,N'$Command',N'$Description',$Picture,$UseMask
+"@
+
+    Write-Verbose "Adding Custom POS Button $Description to $DatabaseName"
+    Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $AddCustomPOSButtonQuery
+>>>>>>> 8ceb6a61ce8139595c6ddfbbdf6125f518262c46
 }
