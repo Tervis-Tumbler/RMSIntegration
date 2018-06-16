@@ -1222,3 +1222,38 @@ WHERE ID = '$ItemID'
     }
 
 }
+
+function ConvertFrom-EBSItemNumberToUPC {
+    param (
+        [Parameter(Mandatory)]$CSVObject,
+        [Parameter(Mandatory)]$RMSHQServer,
+        [Parameter(Mandatory)]$RMSHQDataBaseName
+    )
+
+    $ColumnNames = $CSVObject | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name
+    
+    $AliasNumbers = foreach ($ColumnName in $ColumnNames) {
+        $CSVObject.$ColumnName | ForEach-Object {
+            $_
+        }
+    }
+
+    $AliasNumberSQLArray = "('$($AliasNumbers -join "','")')"
+
+    $EBSItemNumberToItemUPCTableQuery = @"
+SELECT Alias.Alias AS EBSItemNumber, 
+    Item.ItemLookupCode AS ItemUPC
+FROM Alias JOIN Item
+ON Alias.ItemID = Item.ID
+WHERE Alias.Alias IN $AliasNumberSQLArray
+"@
+    $EBSItemNumberToItemUPCTable = Invoke-MSSQL -Server $RMSHQServer -Database $RMSHQDataBaseName -sqlCommand $EBSItemNumberToItemUPCTableQuery
+    $IndexedEBSItemNumberToItemUPCTable = $EBSItemNumberToItemUPCTable | ConvertTo-IndexedHashtable -PropertyToIndex EBSItemNumber
+
+    foreach ($ColumnName in $ColumnNames) {
+        $CSVObject.$ColumnName | ForEach-Object {
+            $_ = $IndexedEBSItemNumberToItemUPCTable[$_].ItemUPC
+        }
+    }
+
+}
