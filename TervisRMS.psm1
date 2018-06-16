@@ -1498,9 +1498,6 @@ function ConvertTo-IndexedHashtable {
     }
 }
 
-<<<<<<< HEAD
-}
-
 function ConvertFrom-EBSItemNumberToUPC {
     param (
         [Parameter(Mandatory)]$CSVObject,
@@ -1533,8 +1530,8 @@ WHERE Alias.Alias IN $AliasNumberSQLArray
             $_ = $IndexedEBSItemNumberToItemUPCTable[$_].ItemUPC
         }
     }
+}
 
-=======
 function Add-TervisRMSTenderType {
     [CmdletBinding()]
     param (
@@ -1638,5 +1635,4 @@ exec sp_executesql
 
     Write-Verbose "Adding Custom POS Button $Description to $DatabaseName"
     Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $AddCustomPOSButtonQuery
->>>>>>> 8ceb6a61ce8139595c6ddfbbdf6125f518262c46
 }
