@@ -1243,8 +1243,8 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
         }
     }
 
-    $LidItemQuantityComparisonTable = Join-Object -Left $LidItemsInCurrentInventory -Right $LidItemsAdjustedInventory -Where {$args[0].ItemLookupCode -eq $args[1].ItemLookupCode} -LeftProperties ItemLookupCode,Quantity -RightProperties AdjustedQuantity
-    $LidItemQuantityComparisonTable
+    #$LidItemQuantityComparisonTable = Join-Object -Left $LidItemsInCurrentInventory -Right $LidItemsAdjustedInventory -Where {$args[0].ItemLookupCode -eq $args[1].ItemLookupCode} -LeftProperties ItemLookupCode,Quantity -RightProperties AdjustedQuantity
+    #$LidItemQuantityComparisonTable
 
     Write-Verbose "Building Query Array - UpdateItemQueryArray"
     $FinalUPCSet | ForEach-Object {
@@ -1257,7 +1257,7 @@ WHERE ItemLookupCode = '$($_.$LiddedItemColumnName)' AND Quantity = 0
 "@
         $UpdateItemQueryArray += $UpdateItemQuery
     }
-    $UpdateItemQueryArray
+    #$UpdateItemQueryArray
 
     $FinalUPCSet.UnliddedItem | ForEach-Object {
         $SetItemToZeroQuery = @"
@@ -1269,18 +1269,18 @@ WHERE ItemLookupCode = '$_' AND Quantity > 0
 "@
         $SetItemToZeroQueryArray += $SetItemToZeroQuery
     }
-    $SetItemToZeroQueryArray
+    #$SetItemToZeroQueryArray
 
     Write-Verbose "Building Query - InventoryTransferLogQuery for Lidded"
     $InventoryTransferLogQueryLidded = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $LiddedItemColumnName @InvokeRMSSQLParameters -Verbose
-    $InventoryTransferLogQueryLidded
+    #$InventoryTransferLogQueryLidded
 
     Write-Verbose "Building Query - InventoryTransferLogQuery for Unlidded"
     $InventoryTransferLogQueryUnlidded = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $UnliddedItemColumnName @InvokeRMSSQLParameters -Verbose
-    $InventoryTransferLogQueryUnlidded
+    #$InventoryTransferLogQueryUnlidded
 
-    Write-Verbose "Building Query - InventoryTransferLogQuery for Unlidded"
-    $InventoryTransferLogQueryLids = Invoke-RMSInventoryTransferLogThing -CSVObject $LidItemsInCurrentInventory -CSVColumnName $LidItemsAdjustedInventory @InvokeRMSSQLParameters -Verbose
+    Write-Verbose "Building Query - InventoryTransferLogQuery for Lids"
+    $InventoryTransferLogQueryLids = Invoke-RMSInventoryTransferLogThing -CSVObject $LidItemsAdjustedInventory -CSVColumnName "ItemLookupCode" @InvokeRMSSQLParameters -Verbose
     $InventoryTransferLogQueryLids
 
     if ($PrimeSQL -and $ExecuteSQL) {
@@ -1302,6 +1302,7 @@ WHERE ItemLookupCode = '$_' AND Quantity > 0
         Write-Warning "ExecuteSQL parameter not set. No changes have been made to the database."
     }
 }
+#Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity -ComputerName "eps-rmsbo1" -PathToCSV $CSVPath -LiddedItemColumnName LiddedItem -UnliddedItemColumnName UnliddedItem -LidItemColumnName LidItem -Verbose
 
 function New-LidItemQuantityHashTable {
     param (
