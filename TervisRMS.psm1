@@ -1313,7 +1313,7 @@ function New-LidItemQuantityHashTable {
     $LidItemUniqueItemCodes | ForEach-Object {$LidItemHashTable += @{$_=0}}
 
     $FinalUPCSet | ForEach-Object {
-        $LidItemHashTable[$_.LidItem] = $LidItemHashTable[$_.LidItem] + $_.Quantity
+        $LidItemHashTable["$($_.LidItem)"] = $LidItemHashTable["$($_.LidItem)"] + $_.Quantity
     }
 
     $LidItemHashTable    
@@ -1466,6 +1466,60 @@ function ConvertTo-IndexedHashtable {
     }
     end {
         $HashTable
+    }
+}
+
+function ConvertFrom-EBSItemNumberToUPC {
+    param (
+        [Parameter(Mandatory)]$CSVObject,
+        [Parameter(Mandatory)]$RMSHQServer,
+        [Parameter(Mandatory)]$RMSHQDataBaseName
+    )
+
+    $ColumnNames = $CSVObject | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name
+    
+    $AliasNumbers = foreach ($ColumnName in $ColumnNames) {
+        $CSVObject.$ColumnName | ForEach-Object {
+            $_
+        }
+    }
+
+    $AliasNumberSQLArray = "('$($AliasNumbers -join "','")')"
+    
+    $EBSItemNumberToItemUPCTableQuery = @"
+SELECT Alias.Alias AS EBSItemNumber, 
+    Item.ItemLookupCode AS ItemUPC
+FROM Alias JOIN Item
+ON Alias.ItemID = Item.ID
+WHERE Alias.Alias IN $AliasNumberSQLArray
+"@
+    $EBSItemNumberToItemUPCTable = Invoke-MSSQL -Server $RMSHQServer -Database $RMSHQDataBaseName -sqlCommand $EBSItemNumberToItemUPCTableQuery
+    $IndexedEBSItemNumberToItemUPCTable = $EBSItemNumberToItemUPCTable | ConvertTo-IndexedHashtable -PropertyToIndex EBSItemNumber
+
+    #Manual Index Fix
+    $IndexedEBSItemNumberToItemUPCTable[1164529] = "093597869198" 
+    $IndexedEBSItemNumberToItemUPCTable[1160250] = "093597858079" 
+    $IndexedEBSItemNumberToItemUPCTable[1161453] = "093597861178" 
+    $IndexedEBSItemNumberToItemUPCTable[1204401] = "888633287742" 
+    $IndexedEBSItemNumberToItemUPCTable[1166112] = "093597873775" 
+    $IndexedEBSItemNumberToItemUPCTable[1161456] = "093597861277" 
+    $IndexedEBSItemNumberToItemUPCTable[1161457] = "093597861284"
+
+    $NewCSVObject = @()
+    $CSVObject | ForEach-Object {
+        $TempRow = [PSCustomObject]@{}
+        foreach ($ColumnName in $ColumnNames) {
+            $Value = $IndexedEBSItemNumberToItemUPCTable["$($_.$ColumnName)"].ItemUPC
+            $TempRow | Add-Member -MemberType NoteProperty -Name $ColumnName -Value $Value
+            $TempRow | Add-Member -MemberType NoteProperty -Name "EBS$ColumnName" -Value $_.$ColumnName
+        }
+        [array]$NewCSVObject += $TempRow
+    }
+
+    $NewCSVObject | Where-Object {
+        ($_.LiddedItem -ne $null) -or
+        ($_.UnliddedItem -ne $null) -or
+        ($_.LidItem -ne $null)
     }
 }
 
