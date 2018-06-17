@@ -7,6 +7,14 @@
         {
             "type": "PowerShell",
             "request": "launch",
+            "name": "RMS Debug",
+            "script": "${workspaceFolder}\\Scratch.ps1",
+            "args": [],
+            "cwd": "${file}"
+        },
+        {
+            "type": "PowerShell",
+            "request": "launch",
             "name": "PowerShell Launch Current File",
             "script": "${file}",
             "args": [],
