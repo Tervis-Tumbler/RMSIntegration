@@ -1474,6 +1474,7 @@ function ConvertFrom-EBSItemNumberToUPC {
         [Parameter(Mandatory)]$CSVObject,
         [Parameter(Mandatory)]$RMSHQServer,
         [Parameter(Mandatory)]$RMSHQDataBaseName
+        [switch]$ReturnOnlyGoodData
     )
 
     $ColumnNames = $CSVObject | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name
@@ -1516,10 +1517,15 @@ WHERE Alias.Alias IN $AliasNumberSQLArray
         [array]$NewCSVObject += $TempRow
     }
 
-    $NewCSVObject | Where-Object {
-        ($_.LiddedItem -ne $null) -or
-        ($_.UnliddedItem -ne $null) -or
-        ($_.LidItem -ne $null)
+    if ($ReturnOnlyGoodData){
+        $NewCSVObject | Where-Object {
+            ($_.LiddedItem -ne $null) -or
+            ($_.UnliddedItem -ne $null) -or
+            ($_.LidItem -ne $null)
+        }
+    }
+    else {
+        $NewCSVObject
     }
 }
 
