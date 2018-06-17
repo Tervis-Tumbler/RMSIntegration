@@ -1191,7 +1191,6 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
         [parameter(mandatory)]$LiddedItemColumnName,
         [parameter(mandatory)]$UnliddedItemColumnName,
         [parameter(mandatory)]$LidItemColumnName,
-        [parameter(mandatory)]$LidItemQuantityColumnName,
         [switch]$PrimeSQL,
         [switch]$ExecuteSQL
     )
@@ -1208,11 +1207,6 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
     }
 
     $UnliddedItemResult = Get-RMSItemsUsingCSV -CSVObject $CSVObject -CSVColumnName $UnliddedItemColumnName @InvokeRMSSQLParameters
-    #$LidItemResult = Get-RMSItemsUsingCSV -CSVObject $CSVObject -CSVColumnName $LidItemColumnName @InvokeRMSSQLParameters
-    #$LidItemResult | $CSVObject.LidItemQuantity | Where $CSVObject.LidItem -EQ $LidItemResult.ItemLookupCode
-
-    #Write-Verbose "Adding lid item quantities to CSV object"
-    #$CSVObject = Add-LidItemQuantityToCSV @PSBoundParameters -CSVObject $CSVObject
 
     $IndexedCSV = $CSVObject | ConvertTo-IndexedHashtable -PropertyToIndex $UnliddedItemColumnName 
 
@@ -1231,8 +1225,27 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
     }
     Write-Verbose "Building LidItemHashTable"
     $LidItemHashTable = New-LidItemQuantityHashTable -FinalUPCSet $FinalUPCSet
-    
-    
+
+    $LidItemUPCs = $LidItemHashTable.keys | ForEach-Object {[PSCustomObject]@{
+        LidItem = $_
+    }}
+
+    $LidItemsInCurrentInventory = Get-RMSItemsUsingCSV -CSVObject $LidItemUPCs -CSVColumnName LidItem @InvokeRMSSQLParameters
+
+    $LidItemsAdjustedInventory = $LidItemsInCurrentInventory | ForEach-Object {
+        $NewQuantity = $_.Quantity - $LidItemHashTable[$_.ItemLookupCode]
+        [PSCustomObject]@{
+            ItemLookupCode = $_.ItemLookupCode
+            ID = $_.ID
+            AdjustedQuantity = $NewQuantity
+            Cost = $_.Cost
+            LastUpdated = $_.LastUpdated
+        }
+    }
+
+    $LidItemQuantityComparisonTable = Join-Object -Left $LidItemsInCurrentInventory -Right $LidItemsAdjustedInventory -Where {$args[0].ItemLookupCode -eq $args[1].ItemLookupCode} -LeftProperties ItemLookupCode,Quantity -RightProperties AdjustedQuantity
+    $LidItemQuantityComparisonTable
+
     Write-Verbose "Building Query Array - UpdateItemQueryArray"
     $FinalUPCSet | ForEach-Object {
         $UpdateItemQuery = @"
@@ -1259,60 +1272,36 @@ WHERE ItemLookupCode = '$_' AND Quantity > 0
     $SetItemToZeroQueryArray
 
     Write-Verbose "Building Query - InventoryTransferLogQuery for Lidded"
-    $InventoryTransferLogQueryLidded = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $LiddedItemColumnName -SQLServerName $ComputerName -DatabaseName $DatabaseName -Verbose
+    $InventoryTransferLogQueryLidded = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $LiddedItemColumnName @InvokeRMSSQLParameters -Verbose
     $InventoryTransferLogQueryLidded
 
     Write-Verbose "Building Query - InventoryTransferLogQuery for Unlidded"
-    $InventoryTransferLogQueryUnlidded = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $UnliddedItemColumnName -SQLServerName $ComputerName -DatabaseName $DatabaseName -Verbose
+    $InventoryTransferLogQueryUnlidded = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $UnliddedItemColumnName @InvokeRMSSQLParameters -Verbose
     $InventoryTransferLogQueryUnlidded
+
+    Write-Verbose "Building Query - InventoryTransferLogQuery for Unlidded"
+    $InventoryTransferLogQueryLids = Invoke-RMSInventoryTransferLogThing -CSVObject $LidItemsInCurrentInventory -CSVColumnName $LidItemsAdjustedInventory @InvokeRMSSQLParameters -Verbose
+    $InventoryTransferLogQueryLids
 
     if ($PrimeSQL -and $ExecuteSQL) {
         Write-Verbose "DB Query - Setting lidded item quantities"
-        Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $UpdateItemQueryArray
+        Invoke-RMSSQL -Query $UpdateItemQueryArray @InvokeRMSSQLParameters
     
         Write-Verbose "DB Query - Setting unlidded items to ZERO"
-        Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $SetItemToZeroQueryArray
+        Invoke-RMSSQL -Query $SetItemToZeroQueryArray @InvokeRMSSQLParameters
+
+        Write-Verbose "DB Query - Setting lid items to adjusted quantity"
+        Invoke-RMSSQL -Query $InventoryTransferLogQueryLids @InvokeRMSSQLParameters
     
         Write-Verbose "DB Query - Inserting InventoryTransferLogs for Lidded"
-        Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $InventoryTransferLogQueryLidded
+        Invoke-RMSSQL -Query $InventoryTransferLogQueryLidded @InvokeRMSSQLParameters
         
         Write-Verbose "DB Query - Inserting InventoryTransferLogs for Unlidded"
-        Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $InventoryTransferLogQueryUnlidded
+        Invoke-RMSSQL -Query $InventoryTransferLogQueryUnlidded @InvokeRMSSQLParameters
     } else {
         Write-Warning "ExecuteSQL parameter not set. No changes have been made to the database."
     }
 }
-
-<#
-function Add-LidItemQuantityToCSV {
-    param(
-        [parameter(mandatory)]$ComputerName,
-        [parameter(mandatory)]$CSVObject,
-        [parameter(mandatory)]$LidItemColumnName,
-        [parameter(mandatory)]$LidItemQuantityColumnName
-    )
-    
-    try {
-        $IndexedCSV = $CSVObject | ConvertTo-IndexedHashtable -PropertyToIndex $LidItemColumnName -ErrorAction Stop
-    } catch {
-        throw "Item codes in CSV are not unique one-to-one combinations."
-    }
-
-    $InvokeRMSSQLParameters = @{
-        DatabaseName = Get-RMSDatabaseName -ComputerName $ComputerName | Select-Object -ExpandProperty RMSDatabaseName
-        SQLServerName = $ComputerName
-        CSVObject = $CSVObject
-        CSVColumnName = $LidItemColumnName
-    }
-    $LidItemResult = Get-RMSItemsUsingCSV @InvokeRMSSQLParameters
-
-    $CSVObject = $LidItemResult | ForEach-Object {
-        $IndexedCSV["$($_.$LidItemColumnName)"].$LidItemQuantityColumnName = $_.Quantity
-    }
-
-    $IndexedCSV.Values
-}
-#>
 
 function New-LidItemQuantityHashTable {
     param (
@@ -1328,6 +1317,25 @@ function New-LidItemQuantityHashTable {
     }
 
     $LidItemHashTable    
+}
+
+function ConvertFrom-EBSItemNumberToUPC {
+    param (
+        [Parameter(Mandatory)]$CSVObject,
+        [Parameter(Mandatory)]$RMSHQServer,
+        [Parameter(Mandatory)]$RMSHQDataBaseName
+    )
+    $EBSItemNumberToItemUPCTableQuery = @"
+SELECT Alias.Alias AS EBSItemNumber, 
+    Item.ItemLookupCode AS ItemUPC
+FROM Alias JOIN Item
+ON Alias.ItemID = Item.ID
+"@
+    $EBSItemNumberToItemUPCTable = Invoke-MSSQL -Server $RMSHQServer -Database $RMSHQDataBaseName -sqlCommand $EBSItemNumberToItemUPCTableQuery
+    $IndexedEBSItemNumberToItemUPCTable = $EBSItemNumberToItemUPCTable | ConvertTo-IndexedHashtable -PropertyToIndex EBSItemNumber
+
+    
+
 }
 
 function Get-ItemFromRMSHQDB{
@@ -1361,43 +1369,6 @@ WHERE ItemLookupCode = '$UPCorEBSItemNumber'
     }   
 }
 
-<#
-function Invoke-RMSInventoryTransferLogQueryCreate {
-    param(
-        [parameter(Mandatory)][PSCustomObject]$CSVObject,
-        [parameter(Mandatory)]$CSVColumnName,
-        [parameter(Mandatory)]$SQLServerName,
-        [parameter(Mandatory)]$DatabaseName
-    )
-    $Items = Get-RMSItemsUsingCSV @PSBoundParameters
-    
-    foreach ($Item in $Items) {
-        $InventoryTransferLog = @"
-INSERT INTO InventoryTransferLog" (
-    "ItemID",
-    "DetailID",
-    "Quantity",
-    "DateTransferred",
-    "ReasonCodeID",
-    "CashierID",
-    "Type",
-    "Cost"
-) VALUES (
-    '$($Item.ID)',
-    '0',
-    '$($Item.Quantity)', 
-    '$($Item.LastUpdated)', 
-    0, 
-    1, 
-    1, 
-    '$($Item.Cost)'
-)
-"@
-        $InventoryTransferLogArray += $InventoryTransferLog
-    }
-    $InventoryTransferLogArray
-}
-#>
 function Invoke-RMSInventoryTransferLogThing {
     param(
         [parameter(Mandatory)][PSCustomObject]$CSVObject,
