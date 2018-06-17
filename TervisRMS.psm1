@@ -1473,7 +1473,7 @@ function ConvertFrom-EBSItemNumberToUPC {
     param (
         [Parameter(Mandatory)]$CSVObject,
         [Parameter(Mandatory)]$RMSHQServer,
-        [Parameter(Mandatory)]$RMSHQDataBaseName,
+        [Parameter(Mandatory)]$RMSHQDataBaseName, 
         [switch]$ReturnOnlyGoodData
     )
 
