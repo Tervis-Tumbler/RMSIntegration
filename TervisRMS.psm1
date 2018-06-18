@@ -2,16 +2,16 @@
 
 function Get-HeadquartersServers {
     param(
-        [Switch]$Online = $True
+        [Switch]$Online
     )
 
     $RMSHQServersOU = Get-ADOrganizationalUnit -Filter { Name -eq "RMSHQ Servers" } 
     $HeadquartersServersNames = Get-ADComputer -SearchBase $RMSHQServersOU -Filter { Name -like "*RMSHQ*" } |
-    Select -ExpandProperty name
+    Select-Object -ExpandProperty name
 
     $ClusterResources = Get-ClusterGroup -Cluster hypervcluster5 | 
-    where grouptype -eq "VirtualMachine" |
-    where Name -In $HeadquartersServersNames
+    Where-Object grouptype -eq "VirtualMachine" |
+    Where-Object Name -In $HeadquartersServersNames
 
     Get-VM -ClusterObject $ClusterResources
 
@@ -24,8 +24,8 @@ function Get-HeadquartersServers {
     } -Parameters $BackOfficeComputerNames
 
     $Responses | 
-    where Online -EQ $true |
-    Select -ExpandProperty BackOfficeComputerName
+    Where-Object Online -EQ $true |
+    Select-Object -ExpandProperty BackOfficeComputerName
 }
 
 function Get-BackOfficeComputers {
@@ -34,23 +34,22 @@ function Get-BackOfficeComputers {
     )
 
     $BackOfficeComputerNames = Get-ADComputer -Filter * -SearchBase "OU=Back Office Computers,OU=Remote Store Computers,OU=Computers,OU=Stores,OU=Departments,DC=tervis,DC=prv" |
-    Select -ExpandProperty name
-
-    $Responses = Start-ParallelWork -ScriptBlock {
-        param($Parameter)
-        [pscustomobject][ordered]@{
-            BackOfficeComputerName = $Parameter;
-            Online = $(Test-Connection -ComputerName $Parameter -Count 1 -Quiet);        
-        }
-    } -Parameters $BackOfficeComputerNames
+    Select-Object -ExpandProperty name
 
     if ($Online) {
+        $Responses = Start-ParallelWork -ScriptBlock {
+            param($Parameter)
+            [pscustomobject][ordered]@{
+                BackOfficeComputerName = $Parameter;
+                Online = $(Test-Connection -ComputerName $Parameter -Count 1 -Quiet);        
+            }
+        } -Parameters $BackOfficeComputerNames
+
         $Responses | 
-        where Online -EQ $true |
-        Select -ExpandProperty BackOfficeComputerName
+        Where-Object Online -EQ $true |
+        Select-Object -ExpandProperty BackOfficeComputerName
     } else {
-        $Responses |         
-        Select -ExpandProperty BackOfficeComputerName
+        $BackOfficeComputerNames
     }
 }
 
@@ -60,21 +59,19 @@ function Get-RegisterComputers {
     )
 
     $RegisterComputerNames = Get-ADComputer -Filter * -SearchBase "OU=Register Computers,OU=Remote Store Computers,OU=Computers,OU=Stores,OU=Departments,DC=tervis,DC=prv" |
-        where Enabled -EQ $true |
-        Select -ExpandProperty name
-
-   
+        Where-Object Enabled -EQ $true |
+        Select-Object -ExpandProperty name  
 
     if ($Online) {
-        $Responses = Start-ParallelWork -ScriptBlock {
+        Start-ParallelWork -ScriptBlock {
             param($Parameter)
             [pscustomobject][ordered]@{
                 RegisterComputerName = $Parameter;
                 Online = $(Test-Connection -ComputerName $Parameter -Count 1 -Quiet);        
             }
         } -Parameters $RegisterComputerNames | 
-        where Online -EQ $true |
-        Select -ExpandProperty RegisterComputerName
+        Where-Object Online -EQ $true |
+        Select-Object -ExpandProperty RegisterComputerName
     } else {
         $RegisterComputerNames
     }
@@ -86,8 +83,8 @@ function Get-RegisterComputerObjects {
     )
 
     Get-ADComputer -Filter * -SearchBase "OU=Register Computers,OU=Remote Store Computers,OU=Computers,OU=Stores,OU=Departments,DC=tervis,DC=prv" -Properties LastLogonDate,IPv4Address |
-        where Enabled -EQ $true |
-        where {$_.LastLogonDate -GT (Get-Date).AddDays(-1*$MaxAgeInDays)} |
+        Where-Object Enabled -EQ $true |
+        Where-Object {$_.LastLogonDate -GT (Get-Date).AddDays(-1*$MaxAgeInDays)} |
         Add-Member -MemberType AliasProperty -Name ComputerName -Value Name -Force -PassThru
 }
 
@@ -96,8 +93,8 @@ function Get-OmittedRegisterComputers {
         $OnlineRegisterComputers = (Get-RegisterComputers -Online)
     )
     $AllRegisterComputers = Get-ADComputer -Filter * -SearchBase "OU=Register Computers,OU=Remote Store Computers,OU=Computers,OU=Stores,OU=Departments,DC=tervis,DC=prv" |
-        select -ExpandProperty Name
-    compare $AllRegisterComputers $OnlineRegisterComputers -PassThru
+        Select-Object -ExpandProperty Name
+    Compare-Object $AllRegisterComputers $OnlineRegisterComputers -PassThru
 }
 
 function Get-BackOfficeComputersWhereConditionTrue {
@@ -117,8 +114,8 @@ function Get-BackOfficeComputersWhereConditionTrue {
     } -Parameters $BackOfficeComputerNames
     
     $Responses | 
-    where ConditionResult -EQ $true | 
-    select -ExpandProperty BackOfficeComputerName
+    Where-Object ConditionResult -EQ $true | 
+    Select-Object -ExpandProperty BackOfficeComputerName
 }
 
 function Get-BackOfficeComputersRunningSQL {
@@ -138,8 +135,8 @@ function Get-BackOfficeComputersRunningSQL {
     } -Parameters $BackOfficeComputerNames
     
     $Responses | 
-    where RunningSQL -EQ $true | 
-    select -ExpandProperty BackOfficeComputerName
+    Where-Object RunningSQL -EQ $true | 
+    Select-Object -ExpandProperty BackOfficeComputerName
 }
 
 function Get-RMSBackOfficeDatabaseName {
@@ -165,8 +162,8 @@ function Get-RMSBackOfficeDatabaseName {
     $Results = Invoke-RMSSQL -DataBaseName "master" -SQLServerName $BackOfficeComputerName -Query $Query
 
     $RMSDatabaseName = $Results | 
-    sort TotalSizeMB -Descending | 
-    select -First 1 -ExpandProperty Name
+    Sort-Object TotalSizeMB -Descending | 
+    Select-Object -First 1 -ExpandProperty Name
 
     [pscustomobject][ordered]@{
         BackOfficeComputerName = $BackOfficeComputerName
@@ -201,7 +198,7 @@ function Get-RMSBatchNumber {
     $Query = "select BatchNumber from [batch] where dbtimestamp > $LastDBTimeStamp AND Status = 7"
 
     Invoke-RMSSQL -DataBaseName $DataBaseName -SQLServerName $SQLServerName -Query $Query | 
-    Select -ExpandProperty BatchNumber
+    Select-Object -ExpandProperty BatchNumber
 }
 
 function Get-RMSBatch {
@@ -227,8 +224,8 @@ function Get-RMSSalesBatch {
     #} -Parameters $BackOfficeServerAndDatabaseName
     #
     #$Responses | 
-    #where ConditionResult -EQ $true | 
-    #select -ExpandProperty BackOfficeComputerName
+    #Where-Object ConditionResult -EQ $true | 
+    #Select-Object -ExpandProperty BackOfficeComputerName
 
     foreach ($BackOfficeServerAndDatabaseName in $BackOfficeServerAndDatabaseNames) {
         Get-RMSBatch -DataBaseName $BackOfficeServerAndDatabaseName.RMSDatabasename -SQLServerName $BackOfficeServerAndDatabaseName.backofficecomputername -LastDBTimeStamp
@@ -305,17 +302,17 @@ function Get-BackOfficeDatabaseNames {
     } -Parameters $BackOfficeComputerNames
     
     $Responses | 
-    select backofficecomputername, RMSDatabasename
+    Select-Object backofficecomputername, RMSDatabasename
 }
 
 function Get-ComputersInOU {
     param(
-        [Switch]$Online = $True,
+        [Switch]$Online,
         [Parameter(Mandatory)]$OUPath
     )
 
     $ComputerNames = Get-ADComputer -Filter * -SearchBase $OUPath |
-        Select -ExpandProperty name
+        Select-Object -ExpandProperty name
 
     $Responses = Start-ParallelWork -ScriptBlock {
         param($Parameter)
@@ -326,8 +323,8 @@ function Get-ComputersInOU {
     } -Parameters $ComputerNames
 
     $Responses | 
-        where Online -EQ $true |
-        Select -ExpandProperty ComputerName
+        Where-Object Online -EQ $true |
+        Select-Object -ExpandProperty ComputerName
 }
 
 function Get-ComputersWhereConditionTrue {
@@ -347,8 +344,8 @@ function Get-ComputersWhereConditionTrue {
     } -Parameters $ComputerNames
     
     $Responses | 
-        where ConditionResult -EQ $true | 
-        select -ExpandProperty ComputerName
+        Where-Object ConditionResult -EQ $true | 
+        Select-Object -ExpandProperty ComputerName
 }
 
 function Get-ComputersRunningSQL {
@@ -367,8 +364,8 @@ function Get-ComputersRunningSQL {
     } -Parameters $ComputerNames
     
     $Responses | 
-        where RunningSQL -EQ $true | 
-        select -ExpandProperty ComputerName
+        Where-Object RunningSQL -EQ $true | 
+        Select-Object -ExpandProperty ComputerName
 }
 
 function Get-RMSDatabaseName {
@@ -394,8 +391,8 @@ function Get-RMSDatabaseName {
     $Results = Invoke-RMSSQL -DataBaseName "master" -SQLServerName $ComputerName -Query $Query
 
     $RMSDatabaseName = $Results | 
-        sort TotalSizeMB -Descending | 
-        select -First 1 -ExpandProperty Name
+        Sort-Object TotalSizeMB -Descending | 
+        Select-Object -First 1 -ExpandProperty Name
 
     [pscustomobject][ordered]@{
         ComputerName = $ComputerName
@@ -416,7 +413,7 @@ function Get-ComputerDatabaseNames {
     } -Parameters $ComputerNames
     
     $Responses | 
-        select ComputerName, RMSDatabasename
+        Select-Object ComputerName, RMSDatabasename
 }
 
 function Stop-SOPOSUSERProcess {
@@ -424,7 +421,7 @@ function Stop-SOPOSUSERProcess {
 
     foreach ($RegisterComputer in $RegisterComputers) {
         $RegisterComputer
-        (Get-WmiObject Win32_Process -ComputerName $RegisterComputer | ?{ $_.ProcessName -match "soposuser" }).Terminate()
+        (Get-WmiObject Win32_Process -ComputerName $RegisterComputer | Where-Object { $_.ProcessName -match "soposuser" }).Terminate()
     }
 
 }
@@ -434,7 +431,7 @@ function Stop-SOPOSUSERProcessParallel {
         $RegisterComputers = (Get-RegisterComputers -Online)
     )
 
-    $Responses = Start-ParallelWork -ScriptBlock {
+    Start-ParallelWork -ScriptBlock {
         param($Parameter) 
         $Credential = Get-PasswordstateCredential -PasswordID 417
         Invoke-Command -ComputerName $Parameter -Credential $Credential -ScriptBlock {
@@ -638,7 +635,7 @@ SELECT name, recovery_model_desc
 "@ 
         Add-Member -InputObject $SQLResponse -MemberType NoteProperty -Name ComputerName -Value $parameter
         $SQLResponse
-    } | select ComputerName,name,recovery_model_desc
+    } | Select-Object ComputerName,name,recovery_model_desc
 }
 
 function Get-TervisRMSShift4UTGVersion {
@@ -652,8 +649,8 @@ function Get-TervisRMSShift4UTGVersion {
         param($parameter)
         $UTGProductInformation = Invoke-Command -ComputerName $parameter -ScriptBlock {
              Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\* | 
-                where {$_.DisplayName -match "Shift4 Universal Transaction Gateway"} |
-                select -Property DisplayName,DisplayVersion,InstallDate
+                Where-Object {$_.DisplayName -match "Shift4 Universal Transaction Gateway"} |
+                Select-Object -Property DisplayName,DisplayVersion,InstallDate
         }
         if (!$UTGProductInformation) {
             Write-Warning "Could not get UTG install information from $parameter"
@@ -661,7 +658,7 @@ function Get-TervisRMSShift4UTGVersion {
             Add-Member -InputObject $UTGProductInformation -MemberType NoteProperty -Name ComputerName -Value $parameter
         }
         $UTGProductInformation 
-    } | select ComputerName,DisplayName,DisplayVersion,InstallDate
+    } | Select-Object ComputerName,DisplayName,DisplayVersion,InstallDate
 }
 
 function Get-TervisRMSShift4RMSPluginVersion {
@@ -686,7 +683,7 @@ function Get-TervisRMSShift4RMSPluginVersion {
             Write-Warning "Could not get S4RMS install information from $parameter"
             #Add-Member -InputObject $UTGProductInformation -MemberType NoteProperty -Name ComputerName -Value $parameter
         }
-    } | select ComputerName,DisplayName,DisplayVersion
+    } | Select-Object ComputerName,DisplayName,DisplayVersion
     #>
     $S4RmsLocalPath = "C:\Program Files\Shift4\S4RMS\s4rmsconfig.exe"
     foreach ($Register in $Registers) {
@@ -821,7 +818,7 @@ function Set-RMSClientNetworkConfiguration {
     )
     Begin {
         $ADDomain = Get-ADDomain
-        $ADDNSRoot = $ADDomain | Select -ExpandProperty DNSRoot
+        $ADDNSRoot = $ADDomain | Select-Object -ExpandProperty DNSRoot
     }
     Process {
         if ($RMSClientRole -eq "BackOffice") {
@@ -834,13 +831,13 @@ function Set-RMSClientNetworkConfiguration {
         $DefaultGateway = '10.64.' + $StoreNetworkIdentifier + '.1'
         $DNSServerIPAddresses = @()
         $DNSServerIPAddresses += Get-DhcpServerv4OptionValue -ComputerName $(Get-DhcpServerInDC | `
-            Select -First 1 -ExpandProperty DNSName) | `
-            Where OptionID -eq 6 | `
-            Select -ExpandProperty Value
+            Select-Object -First 1 -ExpandProperty DNSName) | `
+            Where-Object OptionID -eq 6 | `
+            Select-Object -ExpandProperty Value
         $DNSServerIPAddresses += '208.67.220.220','8.8.4.4'
         if ($UseWMI) {
-            $IPConfiguration = Get-WmiObject win32_networkadapterconfiguration -ComputerName $ComputerName | where IPEnabled
-            $InterfaceIndex = $IPConfiguration | Select -ExpandProperty InterfaceIndex
+            $IPConfiguration = Get-WmiObject win32_networkadapterconfiguration -ComputerName $ComputerName | Where-Object IPEnabled
+            $InterfaceIndex = $IPConfiguration | Select-Object -ExpandProperty InterfaceIndex
             $SubnetMask = ($IPConfiguration).IPSubnet[0]
             $IPConfiguration.SetDNSDomain($ADDNSRoot)
             $IPConfiguration.SetDynamicDNSRegistration($true)
@@ -851,12 +848,12 @@ function Set-RMSClientNetworkConfiguration {
             $CurrentNicConfiguration = Get-NetIPConfiguration `
                 -InterfaceAlias $(Get-NetAdapter -CimSession $CimSession).Name `
                 -CimSession $CimSession
-            $InterfaceName = $CurrentNicConfiguration | Select -ExpandProperty InterfaceAlias
+            $InterfaceName = $CurrentNicConfiguration | Select-Object -ExpandProperty InterfaceAlias
             Set-DnsClientServerAddress `
                 -InterfaceAlias ($CurrentNicConfiguration).InterfaceAlias `
                 -ServerAddresses $DNSServerIPAddresses `
                 -CimSession $CimSession
-            $IPConfiguration = Get-WmiObject win32_networkadapterconfiguration -ComputerName $ComputerName | where Description -eq ($CurrentNicConfiguration).InterfaceDescription
+            $IPConfiguration = Get-WmiObject win32_networkadapterconfiguration -ComputerName $ComputerName | Where-Object Description -eq ($CurrentNicConfiguration).InterfaceDescription
             $SubnetMask = ($IPConfiguration).IPSubnet[0]
             $IPConfiguration.SetDNSDomain($ADDNSRoot)
             $IPConfiguration.SetDynamicDNSRegistration($true)
@@ -877,7 +874,7 @@ function Invoke-PushFileToAllBackOfficeComputers {
         $BackOfficeComputers = (Get-BackOfficeComputers -Online),
         [Switch]$Force
     )
-    $TotalComputers = $BackOfficeComputers | measure | select -ExpandProperty Count
+    $TotalComputers = $BackOfficeComputers | Measure-Object | Select-Object -ExpandProperty Count
     $i = 0
     foreach ($Computer in $BackOfficeComputers) {
         Write-Progress -Activity "Pushing file to Back Office computers" -PercentComplete ($i * 100 / $TotalComputers) -CurrentOperation $Computer
@@ -948,7 +945,7 @@ function Get-TervisBackOfficeDefaultUserName {
     invoke-command -ComputerName $ComputerName -ScriptBlock {
         Get-Itemproperty "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\winlogon"
     } | 
-    select defaultusername -ExpandProperty defaultusername
+    Select-Object defaultusername -ExpandProperty defaultusername
 }
 
 function Invoke-NewBackOfficeRDPShorcuts {
@@ -1321,7 +1318,7 @@ function Invoke-DeploySQLBySetSizeInterval {
 
     for ($i = 0; $i -lt $SQLArray.Count; $i += $SetSizeInterval) {
         $QueryToSend = ""
-        $QueryToSend += $SQLArray | Select -First $SetSizeInterval -Skip $i
+        $QueryToSend += $SQLArray | Select-Object -First $SetSizeInterval -Skip $i
         Write-Verbose "Sending queries $i through $($i + $SetSizeInterval - 1)"
         Invoke-RMSSQL @PSBoundParameters -Query $QueryToSend
         Start-Sleep -Seconds ($DelayBetweenQueriesInMinutes * 60)
@@ -1374,7 +1371,7 @@ FROM Alias
 WHERE Alias = '$UPCorEBSItemNumber'
 "@
 
-        $ItemID = Invoke-MSSQL -Server $ComputerName -Database $DataBaseName -SQLCommand $SqlQueryGetItemIDFromAlias -ConvertFromDataRow | select -ExpandProperty ItemID
+        $ItemID = Invoke-MSSQL -Server $ComputerName -Database $DataBaseName -SQLCommand $SqlQueryGetItemIDFromAlias -ConvertFromDataRow | Select-Object -ExpandProperty ItemID
         $SqlQuery = @"
 SELECT ID, HQID, ItemLookupCode, Quantity, Price, Description 
 FROM Item
