@@ -30,11 +30,17 @@ function Get-HeadquartersServers {
 
 function Get-BackOfficeComputers {
     param(
-        [Switch]$Online
+        [switch]$Enabled,
+        [switch]$Online
     )
 
-    $BackOfficeComputerNames = Get-ADComputer -Filter * -SearchBase "OU=Back Office Computers,OU=Remote Store Computers,OU=Computers,OU=Stores,OU=Departments,DC=tervis,DC=prv" |
-    Select-Object -ExpandProperty name
+    $Filter = if ($Enabled) {
+        'Enabled -eq $true'
+    } else {'*'}
+
+    $BackOfficeComputerNames = Get-ADComputer -Filter:$Filter -SearchBase "OU=Back Office Computers,OU=Remote Store Computers,OU=Computers,OU=Stores,OU=Departments,DC=tervis,DC=prv" |
+        Sort-Object Name |
+        Select-Object -ExpandProperty Name
 
     if ($Online) {
         $Responses = Start-ParallelWork -ScriptBlock {
@@ -55,12 +61,17 @@ function Get-BackOfficeComputers {
 
 function Get-RegisterComputers {
     param(
-        [Switch]$Online
+        [switch]$Enabled,
+        [switch]$Online
     )
 
-    $RegisterComputerNames = Get-ADComputer -Filter * -SearchBase "OU=Register Computers,OU=Remote Store Computers,OU=Computers,OU=Stores,OU=Departments,DC=tervis,DC=prv" |
-        Where-Object Enabled -EQ $true |
-        Select-Object -ExpandProperty name  
+    $Filter = if ($Enabled) {
+        'Enabled -eq $true'
+    } else {'*'}
+
+    $RegisterComputerNames = Get-ADComputer -Filter:$Filter -SearchBase "OU=Register Computers,OU=Remote Store Computers,OU=Computers,OU=Stores,OU=Departments,DC=tervis,DC=prv" |
+        Sort-Object Name |
+        Select-Object -ExpandProperty Name  
 
     if ($Online) {
         Start-ParallelWork -ScriptBlock {
@@ -82,15 +93,14 @@ function Get-RegisterComputerObjects {
         [System.UInt16]$MaxAgeInDays = 31
     )
 
-    Get-ADComputer -Filter * -SearchBase "OU=Register Computers,OU=Remote Store Computers,OU=Computers,OU=Stores,OU=Departments,DC=tervis,DC=prv" -Properties LastLogonDate,IPv4Address |
-        Where-Object Enabled -EQ $true |
+    Get-ADComputer -Filter {Enabled -EQ $true} -SearchBase "OU=Register Computers,OU=Remote Store Computers,OU=Computers,OU=Stores,OU=Departments,DC=tervis,DC=prv" -Properties LastLogonDate,IPv4Address |
         Where-Object {$_.LastLogonDate -GT (Get-Date).AddDays(-1*$MaxAgeInDays)} |
         Add-Member -MemberType AliasProperty -Name ComputerName -Value Name -Force -PassThru
 }
 
 function Get-OmittedRegisterComputers {
     param (
-        $OnlineRegisterComputers = (Get-RegisterComputers -Online)
+        $OnlineRegisterComputers = (Get-RegisterComputers -Online -Enabled)
     )
     $AllRegisterComputers = Get-ADComputer -Filter * -SearchBase "OU=Register Computers,OU=Remote Store Computers,OU=Computers,OU=Stores,OU=Departments,DC=tervis,DC=prv" |
         Select-Object -ExpandProperty Name
