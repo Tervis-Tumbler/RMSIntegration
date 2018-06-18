@@ -1205,6 +1205,8 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
         DatabaseName = $DatabaseName
         SQLServerName = $ComputerName
     }
+    $SetSizeInterval = 1000
+    $TimeDelay = 0
 
     $UnliddedItemResult = Get-RMSItemsUsingCSV -CSVObject $CSVObject -CSVColumnName $UnliddedItemColumnName @InvokeRMSSQLParameters
 
@@ -1243,84 +1245,89 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
         }
     }
 
-    #$LidItemQuantityComparisonTable = Join-Object -Left $LidItemsInCurrentInventory -Right $LidItemsAdjustedInventory -Where {$args[0].ItemLookupCode -eq $args[1].ItemLookupCode} -LeftProperties ItemLookupCode,Quantity -RightProperties AdjustedQuantity
-    #$LidItemQuantityComparisonTable
-
-    Write-Verbose "Building Query Array - UpdateItemQueryArray"
+    Write-Verbose "Building Query Array - UpdateLiddedItemQueryArray"
     $FinalUPCSet | ForEach-Object {
-        $UpdateItemQuery = @"
+        [array]$UpdateLiddedItemQueryArray += @"
 UPDATE Item
 SET Quantity = $($_.Quantity), LastUpdated = GETDATE() 
 WHERE ItemLookupCode = '$($_.$LiddedItemColumnName)' AND Quantity = 0
 
-
 "@
-        $UpdateItemQueryArray += $UpdateItemQuery
     }
-    #$UpdateItemQueryArray
 
-    Write-Verbose "Building Query Array - SetItemToZeroQueryArray"
+    Write-Verbose "Building Query Array - SetUnliddedItemToZeroQueryArray"
     $FinalUPCSet.UnliddedItem | ForEach-Object {
-        $SetItemToZeroQuery = @"
+        [array]$SetUnliddedItemToZeroQueryArray += @"
 UPDATE Item
 SET Quantity = 0, LastUpdated = GETDATE()
 WHERE ItemLookupCode = '$_' AND Quantity > 0
 
-
 "@
-        $SetItemToZeroQueryArray += $SetItemToZeroQuery
     }
-    #$SetItemToZeroQueryArray
 
     Write-Verbose "Building Query Array - UpdateLidItemQueryArray"
     $LidItemsAdjustedInventory | ForEach-Object {
-        $UpdateLidItemQuery = @"
+        [array]$UpdateLidItemQueryArray += @"
 UPDATE Item
 SET Quantity = '$($_.AdjustedQuantity)', LastUpdated = GETDATE() 
 WHERE ItemLookupCode = '$($_.ItemLookupCode)' AND LastUpdated < DATEADD(hh,-1,GETDATE())
 
-
 "@
-        $UpdateLidItemQueryArray += $UpdateLidItemQuery
     }
-    #$UpdateLidItemQueryArray
-
+   
     if ($PrimeSQL -and $ExecuteSQL) {
         Write-Verbose "DB Query - Setting lidded item quantities"
-        Invoke-RMSSQL -Query $UpdateItemQueryArray @InvokeRMSSQLParameters
+        Invoke-DeploySQLBySetSizeInterval -SQLArray $UpdateLiddedItemQueryArray -SetSizeInterval $SetSizeInterval @InvokeRMSSQLParameters
     
         Write-Verbose "DB Query - Setting unlidded items to ZERO"
-        Invoke-RMSSQL -Query $SetItemToZeroQueryArray @InvokeRMSSQLParameters
+        Invoke-DeploySQLBySetSizeInterval -SQLArray $SetUnliddedItemToZeroQueryArray -SetSizeInterval $SetSizeInterval @InvokeRMSSQLParameters
 
         Write-Verbose "DB Query - Setting lid items to adjusted quantity"
-        Invoke-RMSSQL -Query $UpdateLidItemQueryArray @InvokeRMSSQLParameters
+        Invoke-DeploySQLBySetSizeInterval -SQLArray $UpdateLidItemQueryArray -SetSizeInterval $SetSizeInterval @InvokeRMSSQLParameters
     }
 
     Write-Verbose "Building Query - InventoryTransferLogQuery for Lidded"
     $InventoryTransferLogQueryLidded = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $LiddedItemColumnName @InvokeRMSSQLParameters -Verbose
-    #$InventoryTransferLogQueryLidded
 
     Write-Verbose "Building Query - InventoryTransferLogQuery for Unlidded"
     $InventoryTransferLogQueryUnlidded = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $UnliddedItemColumnName @InvokeRMSSQLParameters -Verbose
-    #$InventoryTransferLogQueryUnlidded
 
     Write-Verbose "Building Query - InventoryTransferLogQuery for Lids"
     $InventoryTransferLogQueryLids = Invoke-RMSInventoryTransferLogThing -CSVObject $LidItemsAdjustedInventory -CSVColumnName "ItemLookupCode" @InvokeRMSSQLParameters -Verbose
-    #$InventoryTransferLogQueryLids
 
     if ($PrimeSQL -and $ExecuteSQL) {
         Write-Verbose "DB Query - Inserting InventoryTransferLogs for Lidded"
-        Invoke-RMSSQL -Query $InventoryTransferLogQueryLidded @InvokeRMSSQLParameters
+        Invoke-DeploySQLBySetSizeInterval -SQLArray $InventoryTransferLogQueryLidded -SetSizeInterval $SetSizeInterval -DelayBetweenQueriesInMinutes $TimeDelay @InvokeRMSSQLParameters 
     
         Write-Verbose "DB Query - Inserting InventoryTransferLogs for Unlidded"
-        Invoke-RMSSQL -Query $InventoryTransferLogQueryUnlidded @InvokeRMSSQLParameters
+        Invoke-DeploySQLBySetSizeInterval -SQLArray $InventoryTransferLogQueryUnlidded -SetSizeInterval $SetSizeInterval -DelayBetweenQueriesInMinutes $TimeDelay @InvokeRMSSQLParameters
 
         Write-Verbose "DB Query - Inserting InventoryTransferLogs for Lids"
-        Invoke-RMSSQL -Query $InventoryTransferLogQueryUnlidded @InvokeRMSSQLParameters
+        Invoke-DeploySQLBySetSizeInterval -SQLArray $InventoryTransferLogQueryLids -SetSizeInterval $SetSizeInterval -DelayBetweenQueriesInMinutes $TimeDelay @InvokeRMSSQLParameters
     } else {
         Write-Warning "ExecuteSQL parameter not set. No changes have been made to the database."
     }
 }
+
+function Invoke-DeploySQLBySetSizeInterval {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)][array]$SQLArray,
+        [Parameter(Mandatory)]$SQLServerName,
+        [Parameter(Mandatory)]$DataBaseName,
+        [Parameter(Mandatory)]$SetSizeInterval,
+        $DelayBetweenQueriesInMinutes = 0
+    )
+
+    for ($i = 0; $i -lt $SQLArray.Count; $i += $SetSizeInterval) {
+        $QueryToSend = ""
+        $QueryToSend += $SQLArray | Select -First $SetSizeInterval -Skip $i
+        Write-Verbose "Sending queries $i through $($i + $SetSizeInterval - 1)"
+        Invoke-RMSSQL @PSBoundParameters -Query $QueryToSend
+        Start-Sleep -Seconds ($DelayBetweenQueriesInMinutes * 60)
+    }    
+}
+
 
 function New-LidItemQuantityHashTable {
     param (
@@ -1352,9 +1359,6 @@ ON Alias.ItemID = Item.ID
 "@
     $EBSItemNumberToItemUPCTable = Invoke-MSSQL -Server $RMSHQServer -Database $RMSHQDataBaseName -sqlCommand $EBSItemNumberToItemUPCTableQuery
     $IndexedEBSItemNumberToItemUPCTable = $EBSItemNumberToItemUPCTable | ConvertTo-IndexedHashtable -PropertyToIndex EBSItemNumber
-
-    
-
 }
 
 function Get-ItemFromRMSHQDB{
