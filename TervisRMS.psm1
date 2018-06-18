@@ -1240,9 +1240,11 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
             ItemLookupCode = $_.ItemLookupCode
             ID = $_.ID
             AdjustedQuantity = $NewQuantity
+            QuantityDifference = ($_.Quantity - $NewQuantity)
             Cost = $_.Cost
             LastUpdated = $_.LastUpdated
         }
+        Write-Verbose "Original Quantity: $($_.Quantity) New Quantity: $NewQuantity Difference: $QuantityDifference"
     }
 
     Write-Verbose "Building Query Array - UpdateLiddedItemQueryArray"
