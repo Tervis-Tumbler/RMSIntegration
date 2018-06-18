@@ -196,7 +196,7 @@ function Invoke-RMSSQL {
         $Query
     )
     $Credential = Get-PasswordstateCredential -PasswordID 56
-    Invoke-SQL -dataSource $SQLServerName -database $DataBaseName -sqlCommand $Query -Credential $Credential | ConvertFrom-DataRow
+    Invoke-MSSQL -Server $SQLServerName -Database $DataBaseName -SQLCommand $Query -Credential $Credential -ConvertFromDataRow
 }
 
 function Get-RMSBatchNumber {
