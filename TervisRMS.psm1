@@ -1205,7 +1205,7 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
     Write-Verbose "Importing CSV"
     $CSVObject = Import-Csv -Path $PathToCSV
     
-    Write-Verbose "DB Query - Get RMSDatabaseName"
+    Write-Verbose "Getting RMS database name on $ComputerName"
     $DatabaseName = Get-RMSDatabaseName -ComputerName $ComputerName | Select-Object -ExpandProperty RMSDatabaseName
     
     $InvokeRMSSQLParameters = @{
@@ -1215,15 +1215,18 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
     $SetSizeInterval = 1000
     $TimeDelay = 0
 
+    Write-Verbose "Getting RMS data from $DatabaseName"
     $UnliddedItemResult = Get-RMSItemsUsingCSV -CSVObject $CSVObject -CSVColumnName $UnliddedItemColumnName @InvokeRMSSQLParameters
+    $LiddedItemResult = Get-RMSItemsUsingCSV -CSVObject $CSVObject -CSVColumnName $LiddedItemColumnName @InvokeRMSSQLParameters
 
-    $IndexedCSV = $CSVObject | ConvertTo-IndexedHashtable -PropertyToIndex $UnliddedItemColumnName 
+    Write-Verbose "Indexing RMS data"
+    $IndexedCSV = $CSVObject | ConvertTo-IndexedHashtable -PropertyToIndex $UnliddedItemColumnName
+    $IndexedLiddedItemResult = $LiddedItemResult | ConvertTo-IndexedHashtable -PropertyToIndex ItemLookupCode
 
-    Write-Verbose "Building Table - FinalUPCSet"
+    Write-Verbose "Building FinalUPCSet table"
     $FinalUPCSet = $UnliddedItemResult | ForEach-Object {
         $ReferenceLiddedItemUPC = $IndexedCSV["$($_.ItemLookupCode)"].LiddedItem
         $ReferenceLidItemUPC = $IndexedCSV["$($_.ItemLookupCode)"].LidItem
-        #$ReferenceLidItemQuantity = $IndexedCSV["$($_.ItemLookupCode)"].LidItemQuantity
         [PSCustomObject]@{
             $UnliddedItemColumnName = $_.ItemLookupCode
             $LiddedItemColumnName = $ReferenceLiddedItemUPC
@@ -1231,7 +1234,8 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
             Quantity = $_.Quantity
             UnliddedDeltaQuantity = -1 * $_.Quantity
             LiddedDeltaQuantity = $_.Quantity
-            #LidItemQuantity = $ReferenceLidItemQuantity
+            UnliddedCost = $_.Cost
+            LiddedCost = $IndexedLiddedItemResult[$ReferenceLiddedItemUPC].Cost
         }
     }
     Write-Verbose "Building LidItemHashTable"

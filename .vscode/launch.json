@@ -8,7 +8,7 @@
             "type": "PowerShell",
             "request": "launch",
             "name": "RMS Debug",
-            "script": "${workspaceFolder}\\Scratch.ps1",
+            "script": "${workspaceFolder}\\Debug.ps1",
             "args": [],
             "cwd": "${file}"
         },
