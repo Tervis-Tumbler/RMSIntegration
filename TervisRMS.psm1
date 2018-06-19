@@ -1261,6 +1261,8 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
         }
     }
 
+    #$CostComparison = Get-LiddedItemCostComparison -FinalUPCSet $FinalUPCSet -LidItemsInCurrentInventory $LidItemsInCurrentInventory
+
     Write-Verbose "Building Query Array - UpdateLiddedItemQueryArray"
     $FinalUPCSet | ForEach-Object {
         [array]$UpdateLiddedItemQueryArray += @"
@@ -1706,5 +1708,31 @@ function Get-DeltaOfTwoNumbers {
         $NumberObject.Maximum - $NumberObject.Minimum
     } else {
         [System.Math]::Abs($NumberObject.Minimum - $NumberObject.Maximum)
+    }
+}
+
+function Get-LiddedItemCostComparison {
+    param (
+        $FinalUPCSet,
+        $LidItemsInCurrentInventory
+    )
+
+    $IndexedLidItems = $LidItemsInCurrentInventory | ConvertTo-IndexedHashtable -PropertyToIndex ItemLookupCode
+
+    $FinalUPCSet | ForEach-Object  {
+        $UnliddedCost = $_.UnliddedCost
+        $LidCost = $IndexedLidItems[$_.LidItem].Cost
+        $CostSum = ($UnliddedCost + $LidCost)
+        $LiddedCostInRMS = $_.LiddedCost
+        $DoesCostMatch = if ($CostSum -eq $LiddedCostInRMS) {$true} else {$false}
+
+        [PSCustomObject]@{
+            LiddedItem = $_.LiddedItem
+            UnliddedCost = $UnliddedCost
+            LidCost = $LidCost
+            CostSum = $CostSum
+            LiddedCostInRMS = $LiddedCostInRMS
+            DoesCostMatch = $DoesCostMatch
+        }
     }
 }
