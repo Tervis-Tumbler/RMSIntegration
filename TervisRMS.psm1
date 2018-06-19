@@ -1663,3 +1663,21 @@ exec sp_executesql
     Write-Verbose "Adding Custom POS Button $Description to $DatabaseName"
     Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $ComputerName -Query $AddCustomPOSButtonQuery
 }
+
+function Get-DeltaOfTwoNumbers {
+    param (
+        [Parameter(Mandatory,Position=1)]$FirstNumber,
+        [Parameter(Mandatory,Position=2)]$SecondNumber
+    )
+
+    $NumberObject = $($FirstNumber,$SecondNumber) | Measure-Object -Maximum -Minimum
+
+    if (
+        (($FirstNumber -ge 0) -and ($SecondNumber -ge 0)) -or
+        (($FirstNumber -lt 0) -xor ($SecondNumber -lt 0))
+    ) {
+        $NumberObject.Maximum - $NumberObject.Minimum
+    } else {
+        [System.Math]::Abs($NumberObject.Minimum - $NumberObject.Maximum)
+    }
+}
