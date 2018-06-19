@@ -1223,13 +1223,15 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
     $FinalUPCSet = $UnliddedItemResult | ForEach-Object {
         $ReferenceLiddedItemUPC = $IndexedCSV["$($_.ItemLookupCode)"].LiddedItem
         $ReferenceLidItemUPC = $IndexedCSV["$($_.ItemLookupCode)"].LidItem
-        $ReferenceLidItemQuantity = $IndexedCSV["$($_.ItemLookupCode)"].LidItemQuantity
+        #$ReferenceLidItemQuantity = $IndexedCSV["$($_.ItemLookupCode)"].LidItemQuantity
         [PSCustomObject]@{
             $UnliddedItemColumnName = $_.ItemLookupCode
             $LiddedItemColumnName = $ReferenceLiddedItemUPC
-            Quantity = $_.Quantity
             LidItem = $ReferenceLidItemUPC
-            LidItemQuantity = $ReferenceLidItemQuantity
+            Quantity = $_.Quantity
+            UnliddedDeltaQuantity = -1 * $_.Quantity
+            LiddedDeltaQuantity = $_.Quantity
+            #LidItemQuantity = $ReferenceLidItemQuantity
         }
     }
     Write-Verbose "Building LidItemHashTable"
@@ -1247,6 +1249,7 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
             ItemLookupCode = $_.ItemLookupCode
             ID = $_.ID
             AdjustedQuantity = $NewQuantity
+            LidDeltaQuantity = -1 * (Get-DeltaOfTwoNumbers $_.Quantity $NewQuantity)
             Cost = $_.Cost
             LastUpdated = $_.LastUpdated
         }
