@@ -1232,6 +1232,8 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
             $LiddedItemColumnName = $ReferenceLiddedItemUPC
             LidItem = $ReferenceLidItemUPC
             Quantity = $_.Quantity
+            UnliddedID = $_.ID
+            LiddedID = $IndexedLiddedItemResult[$ReferenceLiddedItemUPC].ID
             UnliddedDeltaQuantity = -1 * $_.Quantity
             LiddedDeltaQuantity = $_.Quantity
             UnliddedCost = $_.Cost
@@ -1289,20 +1291,38 @@ WHERE ItemLookupCode = '$($_.ItemLookupCode)' AND LastUpdated < DATEADD(hh,-1,GE
 "@
     }
 
-    $InventoryTranferLogData_Unlidded = $FinalUPCSet | Select-Object -Property `
-        @{Name="ID";Expression={$_.$UnliddedItemColumnName}},
-        @{Name="Quantity";Expression={$_.UnliddedDeltaQuantity}},
-        @{Name="Cost";Expression={$_.UnliddedCost}}
+    $InventoryTranferLogData_Unlidded = $FinalUPCSet | ForEach-Object {
+            [PSCustomObject]@{
+                ID = $_.UnliddedID
+                Quantity = $_.UnliddedDeltaQuantity
+                Cost = $_.UnliddedCost
+            }
+        }
 
-    $InventoryTransferLogData_Lidded = $FinalUPCSet | Select-Object -Property `
-        @{Name="ID";Expression={$_.$LiddedItemColumnName}},
-        @{Name="Quantity";Expression={$_.LiddedDeltaQuantity}},
-        @{Name="Cost";Expression={$_.LiddedCost}}
+    $InventoryTransferLogData_Lidded = $FinalUPCSet | ForEach-Object {
+            [PSCustomObject]@{
+                ID = $_.LiddedID
+                Quantity = $_.LiddedDeltaQuantity
+                Cost = $_.LiddedCost
+            }
+        }
     
-    $InventoryTransferLogData_Lid = $LidItemsAdjustedInventory | Select-Object -Property `
-        ID,
-        @{Name="Quantity";Expression={$_.LidDeltaQuantity}},
-        Cost
+    $InventoryTransferLogData_Lid = $LidItemsAdjustedInventory | ForEach-Object {
+        [PSCustomObject]@{
+            ID = $_.ID
+            Quantity = $_.LidDeltaQuantity
+            Cost = $_.Cost
+        }
+    }
+    
+    Write-Verbose "Building Query - InventoryTransferLogQuery for Unlidded"
+    $InventoryTransferLogQuery += $InventoryTranferLogData_Unlidded | New-RMSInventoryTransferLogQuery
+    
+    Write-Verbose "Building Query - InventoryTransferLogQuery for Lidded"
+    $InventoryTransferLogQuery += $InventoryTransferLogData_Lidded | New-RMSInventoryTransferLogQuery -ErrorAction SilentlyContinue
+
+    Write-Verbose "Building Query - InventoryTransferLogQuery for Lids"
+    $InventoryTransferLogQuery += $InventoryTransferLogData_Lid | New-RMSInventoryTransferLogQuery
    
     if ($PrimeSQL -and $ExecuteSQL) {
         Write-Verbose "DB Query - Setting lidded item quantities"
@@ -1313,29 +1333,9 @@ WHERE ItemLookupCode = '$($_.ItemLookupCode)' AND LastUpdated < DATEADD(hh,-1,GE
 
         Write-Verbose "DB Query - Setting lid items to adjusted quantity"
         Invoke-DeploySQLBySetSizeInterval -SQLArray $UpdateLidItemQueryArray -SetSizeInterval $SetSizeInterval @InvokeRMSSQLParameters
-    }
 
-    Write-Verbose "Building Query - InventoryTransferLogQuery for Lidded"
-    #$InventoryTransferLogQueryLidded = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $LiddedItemColumnName @InvokeRMSSQLParameters -Verbose
-    $InventoryTransferLogQueryLidded = $InventoryTranferLogData_Lidded | New-RMSInventoryTransferLogQuery 
-
-    Write-Verbose "Building Query - InventoryTransferLogQuery for Unlidded"
-    #$InventoryTransferLogQueryUnlidded = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $UnliddedItemColumnName @InvokeRMSSQLParameters -Verbose
-    $InventoryTransferLogQueryUnlidded = $InventoryTranferLogData_Unlidded | New-RMSInventoryTransferLogQuery
-
-    Write-Verbose "Building Query - InventoryTransferLogQuery for Lids"
-    #$InventoryTransferLogQueryLids = Invoke-RMSInventoryTransferLogThing -CSVObject $LidItemsAdjustedInventory -CSVColumnName "ItemLookupCode" @InvokeRMSSQLParameters -Verbose
-    $InventoryTransferLogQueryLids = $InventoryTranferLogData_Lid | New-RMSInventoryTransferLogQuery
-
-    if ($PrimeSQL -and $ExecuteSQL) {
         Write-Verbose "DB Query - Inserting InventoryTransferLogs for Lidded"
-        Invoke-DeploySQLBySetSizeInterval -SQLArray $InventoryTransferLogQueryLidded -SetSizeInterval $SetSizeInterval -DelayBetweenQueriesInMinutes $TimeDelay @InvokeRMSSQLParameters 
-    
-        Write-Verbose "DB Query - Inserting InventoryTransferLogs for Unlidded"
-        Invoke-DeploySQLBySetSizeInterval -SQLArray $InventoryTransferLogQueryUnlidded -SetSizeInterval $SetSizeInterval -DelayBetweenQueriesInMinutes $TimeDelay @InvokeRMSSQLParameters
-
-        Write-Verbose "DB Query - Inserting InventoryTransferLogs for Lids"
-        Invoke-DeploySQLBySetSizeInterval -SQLArray $InventoryTransferLogQueryLids -SetSizeInterval $SetSizeInterval -DelayBetweenQueriesInMinutes $TimeDelay @InvokeRMSSQLParameters
+        Invoke-DeploySQLBySetSizeInterval -SQLArray $InventoryTransferLogQuery -SetSizeInterval $SetSizeInterval -DelayBetweenQueriesInMinutes $TimeDelay @InvokeRMSSQLParameters 
     } else {
         Write-Warning "ExecuteSQL parameter not set. No changes have been made to the database."
     }
@@ -1444,6 +1444,7 @@ function New-RMSInventoryTransferLogQuery {
     )
 
     process {
+        if ($Quantity -ne 0) {
 @"
 INSERT INTO InventoryTransferLog (
     "ItemID",
@@ -1471,6 +1472,7 @@ INSERT INTO InventoryTransferLog (
     '$Cost'
 )
 "@
+        }
     }
 }
 
