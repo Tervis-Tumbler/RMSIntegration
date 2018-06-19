@@ -1288,6 +1288,21 @@ WHERE ItemLookupCode = '$($_.ItemLookupCode)' AND LastUpdated < DATEADD(hh,-1,GE
 
 "@
     }
+
+    $InventoryTranferLogData_Unlidded = $FinalUPCSet | Select-Object -Property `
+        @{Name="ID";Expression={$_.$UnliddedItemColumnName}},
+        @{Name="Quantity";Expression={$_.UnliddedDeltaQuantity}},
+        @{Name="Cost";Expression={$_.UnliddedCost}}
+
+    $InventoryTransferLogData_Lidded = $FinalUPCSet | Select-Object -Property `
+        @{Name="ID";Expression={$_.$LiddedItemColumnName}},
+        @{Name="Quantity";Expression={$_.LiddedDeltaQuantity}},
+        @{Name="Cost";Expression={$_.LiddedCost}}
+    
+    $InventoryTransferLogData_Lid = $LidItemsAdjustedInventory | Select-Object -Property `
+        ID,
+        @{Name="Quantity";Expression={$_.LidDeltaQuantity}},
+        Cost
    
     if ($PrimeSQL -and $ExecuteSQL) {
         Write-Verbose "DB Query - Setting lidded item quantities"
@@ -1301,13 +1316,16 @@ WHERE ItemLookupCode = '$($_.ItemLookupCode)' AND LastUpdated < DATEADD(hh,-1,GE
     }
 
     Write-Verbose "Building Query - InventoryTransferLogQuery for Lidded"
-    $InventoryTransferLogQueryLidded = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $LiddedItemColumnName @InvokeRMSSQLParameters -Verbose
+    #$InventoryTransferLogQueryLidded = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $LiddedItemColumnName @InvokeRMSSQLParameters -Verbose
+    $InventoryTransferLogQueryLidded = $InventoryTranferLogData_Lidded | New-RMSInventoryTransferLogQuery 
 
     Write-Verbose "Building Query - InventoryTransferLogQuery for Unlidded"
-    $InventoryTransferLogQueryUnlidded = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $UnliddedItemColumnName @InvokeRMSSQLParameters -Verbose
+    #$InventoryTransferLogQueryUnlidded = Invoke-RMSInventoryTransferLogThing -CSVObject $FinalUPCSet -CSVColumnName $UnliddedItemColumnName @InvokeRMSSQLParameters -Verbose
+    $InventoryTransferLogQueryUnlidded = $InventoryTranferLogData_Unlidded | New-RMSInventoryTransferLogQuery
 
     Write-Verbose "Building Query - InventoryTransferLogQuery for Lids"
-    $InventoryTransferLogQueryLids = Invoke-RMSInventoryTransferLogThing -CSVObject $LidItemsAdjustedInventory -CSVColumnName "ItemLookupCode" @InvokeRMSSQLParameters -Verbose
+    #$InventoryTransferLogQueryLids = Invoke-RMSInventoryTransferLogThing -CSVObject $LidItemsAdjustedInventory -CSVColumnName "ItemLookupCode" @InvokeRMSSQLParameters -Verbose
+    $InventoryTransferLogQueryLids = $InventoryTranferLogData_Lid | New-RMSInventoryTransferLogQuery
 
     if ($PrimeSQL -and $ExecuteSQL) {
         Write-Verbose "DB Query - Inserting InventoryTransferLogs for Lidded"
@@ -1421,7 +1439,7 @@ function New-RMSInventoryTransferLogQuery {
     param(
         [parameter(Mandatory,ValueFromPipelineByPropertyName)]$ID,
         [parameter(Mandatory,ValueFromPipelineByPropertyName)]$Quantity,
-        [parameter(Mandatory,ValueFromPipelineByPropertyName)]$LastUpdated,
+        #[parameter(Mandatory,ValueFromPipelineByPropertyName)]$LastUpdated,
         [parameter(Mandatory,ValueFromPipelineByPropertyName)]$Cost
     )
 
