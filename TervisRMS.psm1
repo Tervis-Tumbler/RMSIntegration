@@ -1266,8 +1266,6 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
         }
     }
 
-    #$CostComparison = Get-LiddedItemCostComparison -FinalUPCSet $FinalUPCSet -LidItemsInCurrentInventory $LidItemsInCurrentInventory
-
     Write-Verbose "Building Query Array - UpdateLiddedItemQueryArray"
     $FinalUPCSet | ForEach-Object {
         [array]$UpdateLiddedItemQueryArray += @"
@@ -1778,7 +1776,7 @@ function Find-DuplicateValues {
             }
         }
 
-        $DuplicateArray
+        $DuplicateArray | Sort-Object | Select-Object -Unique
     }
 }
 
