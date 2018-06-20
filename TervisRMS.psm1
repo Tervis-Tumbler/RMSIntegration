@@ -1240,6 +1240,9 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
             LiddedCost = $IndexedLiddedItemResult[$ReferenceLiddedItemUPC].Cost
         }
     }
+
+    $FinalUPCSet = Remove-FinalUPCSetDuplicates -FinalUPCSet $FinalUPCSet
+
     Write-Verbose "Building LidItemHashTable"
     $LidItemHashTable = New-LidItemQuantityHashTable -FinalUPCSet $FinalUPCSet
 
@@ -1734,5 +1737,42 @@ function Get-LiddedItemCostComparison {
             LiddedCostInRMS = $LiddedCostInRMS
             DoesCostMatch = $DoesCostMatch
         }
+    }
+}
+
+function Remove-FinalUPCSetDuplicates {
+    param (
+        [Parameter(Mandatory,ValueFromPipeline)]$FinalUPCSet
+    )
+    begin {
+        $DuplicateLiddedItemsUPCs = $FinalUPCSet.LiddedItem | Find-DuplicateValues
+    }
+    process {
+        $FinalUPCSet | Where-Object LiddedItem -NotIn $DuplicateLiddedItemsUPCs
+        #$ProblemItems = $FinalUPCSet | Where-Object LiddedItem -In $DuplicateLiddedItemsUPCs
+    }
+}
+
+function Find-DuplicateValues {
+    param (
+        [Parameter(Mandatory,ValueFromPipeline)]$Values
+    )
+    begin {
+        [hashtable]$tempHash = @{}
+        [array]$DuplicateArray = $()
+        [array]$ValuesArray = $()
+    } process {
+        $ValuesArray += $Values
+    }
+    end {
+        for ($i = 0; $i -lt $ValuesArray.Count; $i++) {
+            try {
+                $tempHash += @{$ValuesArray[$i] = $null}
+            } catch {
+                $DuplicateArray += $ValuesArray[$i]
+            }
+        }
+
+        $DuplicateArray
     }
 }
