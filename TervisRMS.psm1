@@ -1342,6 +1342,10 @@ WHERE ItemLookupCode = '$($_.ItemLookupCode)' AND LastUpdated < DATEADD(hh,-1,GE
         Write-Verbose "DB Query - Inserting InventoryTransferLogs for Lidded"
         Invoke-DeploySQLBySetSizeInterval -SQLArray $InventoryTransferLogQuery -SetSizeInterval $SetSizeInterval -DelayBetweenQueriesInMinutes $TimeDelay @InvokeRMSSQLParameters 
     } else {
+        $UpdateLiddedItemQueryArray
+        $SetUnliddedItemToZeroQueryArray
+        $UpdateLidItemQueryArray
+        $InventoryTransferLogQuery
         Write-Warning "ExecuteSQL parameter not set. No changes have been made to the database."
     }
 }
@@ -1505,7 +1509,7 @@ WHERE
     ItemLookupCode in $ItemArray
 "@
 
-    Invoke-MSSQL -Server $SQLServerName -Database $DatabaseName -SQLCommand $SQLCommand
+    Invoke-RMSSQL -DataBaseName $DatabaseName -SQLServerName $SQLServerName -Query $SQLCommand
 }
 
 function ConvertTo-IndexedHashtable {
@@ -1784,7 +1788,7 @@ function Invoke-RMSLidConversionDeployment {
     $PathToCSV = $Parameters.GenericField2
     $ComputerNames = (Get-Content $PathToComputerList) -split "`n"
 
-    Start-ParallelWork -Parameters $ComputerNames -OptionalParameters $PathToCSV -MaxConcurrentJobs 5 -ScriptBlock {
+    Start-ParallelWork -Parameters $ComputerNames -OptionalParameters $PathToCSV -MaxConcurrentJobs 7 -ScriptBlock {
         param (
             $Parameters,
             $OptionalParameters
