@@ -1224,22 +1224,24 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
     $IndexedLiddedItemResult = $LiddedItemResult | ConvertTo-IndexedHashtable -PropertyToIndex ItemLookupCode
 
     Write-Verbose "Building FinalUPCSet table"
-    $FinalUPCSet = $UnliddedItemResult | ForEach-Object {
-        $ReferenceLiddedItemUPC = $IndexedCSV["$($_.ItemLookupCode)"].LiddedItem
-        $ReferenceLidItemUPC = $IndexedCSV["$($_.ItemLookupCode)"].LidItem
-        [PSCustomObject]@{
-            $UnliddedItemColumnName = $_.ItemLookupCode
-            $LiddedItemColumnName = $ReferenceLiddedItemUPC
-            LidItem = $ReferenceLidItemUPC
-            Quantity = $_.Quantity
-            UnliddedID = $_.ID
-            LiddedID = $IndexedLiddedItemResult[$ReferenceLiddedItemUPC].ID
-            UnliddedDeltaQuantity = -1 * $_.Quantity
-            LiddedDeltaQuantity = $_.Quantity
-            UnliddedCost = $_.Cost
-            LiddedCost = $IndexedLiddedItemResult[$ReferenceLiddedItemUPC].Cost
+    $FinalUPCSet = $UnliddedItemResult | 
+        Where-Object Quantity -gt 0 |
+        ForEach-Object {
+            $ReferenceLiddedItemUPC = $IndexedCSV["$($_.ItemLookupCode)"].LiddedItem
+            $ReferenceLidItemUPC = $IndexedCSV["$($_.ItemLookupCode)"].LidItem
+            [PSCustomObject]@{
+                $UnliddedItemColumnName = $_.ItemLookupCode
+                $LiddedItemColumnName = $ReferenceLiddedItemUPC
+                LidItem = $ReferenceLidItemUPC
+                Quantity = $_.Quantity
+                UnliddedID = $_.ID
+                LiddedID = $IndexedLiddedItemResult[$ReferenceLiddedItemUPC].ID
+                UnliddedDeltaQuantity = -1 * $_.Quantity
+                LiddedDeltaQuantity = $_.Quantity
+                UnliddedCost = $_.Cost
+                LiddedCost = $IndexedLiddedItemResult[$ReferenceLiddedItemUPC].Cost
+            }
         }
-    }
 
     $FinalUPCSet = Remove-FinalUPCSetDuplicates -FinalUPCSet $FinalUPCSet
 
@@ -1277,14 +1279,13 @@ WHERE ItemLookupCode = '$($_.$LiddedItemColumnName)' AND Quantity = 0
     }
 
     Write-Verbose "Building Query Array - SetUnliddedItemToZeroQueryArray"
-    $FinalUPCSet.UnliddedItem | ForEach-Object {
+    $UnliddedItemsToSetToZero = ConvertTo-SQLArrayFromCSV -CSVObject $FinalUPCSet -CSVColumnName $UnliddedItemColumnName
         [array]$SetUnliddedItemToZeroQueryArray += @"
 UPDATE Item
 SET Quantity = 0, LastUpdated = GETDATE()
-WHERE ItemLookupCode = '$_' AND Quantity > 0
+WHERE Quantity > 0 AND ItemLookupCode IN $UnliddedItemsToSetToZero
 
 "@
-    }
 
     Write-Verbose "Building Query Array - UpdateLidItemQueryArray"
     $LidItemsAdjustedInventory | ForEach-Object {
