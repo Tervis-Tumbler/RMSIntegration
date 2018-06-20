@@ -183,7 +183,7 @@ function Get-RMSBackOfficeDatabaseName {
 
 function New-RMSSQLDatabaseCredentials {
     param (
-        $Credential = $(Get-credential -Message "Enter RMS back office SQL server databse user credentials" ) 
+        [pscredential]$Credential = $(Get-credential -Message "Enter RMS back office SQL server databse user credentials" ) 
     )
 
     $Credential | Export-Clixml -Path "$env:USERPROFILE\RMSSQLCredential.txt"
@@ -615,7 +615,7 @@ function Get-SQLRemoteAccessEnabled {
 function Get-OfflineDBTransactionLogName {
     [CmdletBinding()]
     param (
-        $Credential = (Get-PasswordstateCredential -PasswordID 56),
+        [pscredential]$Credential = (Get-PasswordstateCredential -PasswordID 56),
         [Parameter(Mandatory=$true)]$ComputerName
     )
 
@@ -1373,7 +1373,7 @@ function New-LidItemQuantityHashTable {
 
     $LidItemUniqueItemCodes = $FinalUPCSet | Select-Object -ExpandProperty LidItem -Unique
     [hashtable]$LidItemHashTable = @{}
-    $LidItemUniqueItemCodes | ForEach-Object {$LidItemHashTable += @{$_=0}}
+    $LidItemUniqueItemCodes | ForEach-Object {[hashtable]$LidItemHashTable += @{$_=0}}
 
     $FinalUPCSet | ForEach-Object {
         $LidItemHashTable["$($_.LidItem)"] = $LidItemHashTable["$($_.LidItem)"] + $_.Quantity
@@ -1395,7 +1395,7 @@ FROM Alias JOIN Item
 ON Alias.ItemID = Item.ID
 "@
     $EBSItemNumberToItemUPCTable = Invoke-MSSQL -Server $RMSHQServer -Database $RMSHQDataBaseName -sqlCommand $EBSItemNumberToItemUPCTableQuery
-    $IndexedEBSItemNumberToItemUPCTable = $EBSItemNumberToItemUPCTable | ConvertTo-IndexedHashtable -PropertyToIndex EBSItemNumber
+    [hashtable]$IndexedEBSItemNumberToItemUPCTable = $EBSItemNumberToItemUPCTable | ConvertTo-IndexedHashtable -PropertyToIndex EBSItemNumber
 }
 
 function Get-ItemFromRMSHQDB{
