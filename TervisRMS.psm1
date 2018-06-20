@@ -1206,7 +1206,7 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
     $CSVObject = Import-Csv -Path $PathToCSV
     
     Write-Verbose "Getting RMS database name on $ComputerName"
-    $DatabaseName = Get-RMSDatabaseName -ComputerName $ComputerName | Select-Object -ExpandProperty RMSDatabaseName
+    $DatabaseName = Get-RMSDatabaseName -ComputerName $ComputerName -ErrorAction Stop | Select-Object -ExpandProperty RMSDatabaseName
     
     $InvokeRMSSQLParameters = @{
         DatabaseName = $DatabaseName
@@ -1774,5 +1774,27 @@ function Find-DuplicateValues {
         }
 
         $DuplicateArray
+    }
+}
+
+function Invoke-RMSLidConversionDeployment {
+    
+    $Parameters = Get-PasswordstatePassword -ID 5471
+    $PathToComputerList = $Parameters.GenericField1
+    $PathToCSV = $Parameters.GenericField2
+    $ComputerNames = (Get-Content $PathToComputerList) -split "`n"
+
+    Start-ParallelWork -Parameters $ComputerNames -OptionalParameters $PathToCSV -MaxConcurrentJobs 5 -ScriptBlock {
+        param (
+            $Parameters,
+            $OptionalParameters
+        )
+        Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity `
+            -ComputerName $Parameters `
+            -PathToCSV $OptionalParameters `
+            -LiddedItemColumnName LiddedItem `
+            -UnliddedItemColumnName UnliddedItem `
+            -LidItemColumnName LidItem `
+            -Verbose *> "C:\RMSLidConversionOutput\$Parameters.log"
     }
 }
