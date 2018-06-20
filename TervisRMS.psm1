@@ -1329,6 +1329,8 @@ WHERE ItemLookupCode = '$($_.ItemLookupCode)' AND LastUpdated < DATEADD(hh,-1,GE
     $InventoryTransferLogQuery += $InventoryTransferLogData_Lid | New-RMSInventoryTransferLogQuery
    
     if ($PrimeSQL -and $ExecuteSQL) {
+        Write-Verbose "Items to be updated: $($InventoryTransferLogQuery.Count)"
+        
         Write-Verbose "DB Query - Setting lidded item quantities"
         Invoke-DeploySQLBySetSizeInterval -SQLArray $UpdateLiddedItemQueryArray -SetSizeInterval $SetSizeInterval @InvokeRMSSQLParameters
     
@@ -1341,10 +1343,7 @@ WHERE ItemLookupCode = '$($_.ItemLookupCode)' AND LastUpdated < DATEADD(hh,-1,GE
         Write-Verbose "DB Query - Inserting InventoryTransferLogs for Lidded"
         Invoke-DeploySQLBySetSizeInterval -SQLArray $InventoryTransferLogQuery -SetSizeInterval $SetSizeInterval -DelayBetweenQueriesInMinutes $TimeDelay @InvokeRMSSQLParameters 
     } else {
-        $UpdateLiddedItemQueryArray
-        $SetUnliddedItemToZeroQueryArray
-        $UpdateLidItemQueryArray
-        $InventoryTransferLogQuery
+        Write-Verbose "Items to be updated: $($InventoryTransferLogQuery.Count)"
         Write-Warning "ExecuteSQL parameter not set. No changes have been made to the database."
     }
 }
