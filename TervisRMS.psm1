@@ -1212,8 +1212,8 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
         DatabaseName = $DatabaseName
         SQLServerName = $ComputerName
     }
-    $SetSizeInterval = 1000
-    $TimeDelay = 0
+    $SetSizeInterval = 500
+    $TimeDelay = 10
 
     Write-Verbose "Getting RMS data from $DatabaseName"
     $UnliddedItemResult = Get-RMSItemsUsingCSV -CSVObject $CSVObject -CSVColumnName $UnliddedItemColumnName @InvokeRMSSQLParameters
@@ -1244,16 +1244,16 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
         }
 
     $FinalUPCSet = Remove-FinalUPCSetDuplicates -FinalUPCSet $FinalUPCSet
-
+    
     Write-Verbose "Building LidItemHashTable"
     $LidItemHashTable = New-LidItemQuantityHashTable -FinalUPCSet $FinalUPCSet
-
+    
     $LidItemUPCs = $LidItemHashTable.keys | ForEach-Object {[PSCustomObject]@{
         LidItem = $_
     }}
-
+    
     $LidItemsInCurrentInventory = Get-RMSItemsUsingCSV -CSVObject $LidItemUPCs -CSVColumnName LidItem @InvokeRMSSQLParameters
-
+    
     $LidItemsAdjustedInventory = $LidItemsInCurrentInventory | ForEach-Object {
         $NewQuantity = $_.Quantity - $LidItemHashTable[$_.ItemLookupCode]
         [PSCustomObject]@{
@@ -1265,7 +1265,7 @@ function Invoke-RMSUpdateLiddedItemQuantityFromDBUnliddedItemQuantity {
             LastUpdated = $_.LastUpdated
         }
     }
-
+       
     Write-Verbose "Building Query Array - UpdateLiddedItemQueryArray"
     $FinalUPCSet | ForEach-Object {
         [array]$UpdateLiddedItemQueryArray += @"
@@ -1328,6 +1328,15 @@ WHERE ItemLookupCode = '$($_.ItemLookupCode)' AND LastUpdated < DATEADD(hh,-1,GE
     Write-Verbose "Building Query - InventoryTransferLogQuery for Lids"
     $InventoryTransferLogQuery += $InventoryTransferLogData_Lid | New-RMSInventoryTransferLogQuery
    
+    New-Item -Path "\\tervis.prv\departments\IT\IT Shared\Adan\Store Lids Project\WorkingData\$DatabaseName" -ItemType Directory -ErrorAction SilentlyContinue
+    $FinalUPCSetExportPath = "\\tervis.prv\departments\IT\IT Shared\Adan\Store Lids Project\WorkingData\$DatabaseName\$($DatabaseName)_LiddedUnlidded.csv"
+    Write-Verbose "Exporting FinalUPCSet to $FinalUPCSetExportPath"
+    $LidItemExportPath = "\\tervis.prv\departments\IT\IT Shared\Adan\Store Lids Project\WorkingData\$DatabaseName\$($DatabaseName)_Lids.csv"
+    $InventoryTransferLogQueryExportPath = "\\tervis.prv\departments\IT\IT Shared\Adan\Store Lids Project\WorkingData\$DatabaseName\$($DatabaseName)_InventoryTransferLogQuery.txt"
+    $FinalUPCSet | Export-Csv -LiteralPath $FinalUPCSetExportPath -Force
+    $LidItemsAdjustedInventory | Export-Csv -Path $LidItemExportPath -Force
+    $InventoryTransferLogQuery | Out-File -FilePath $InventoryTransferLogQueryExportPath -Force
+
     if ($PrimeSQL -and $ExecuteSQL) {
         Write-Verbose "Items to be updated: $($InventoryTransferLogQuery.Count)"
         
@@ -1796,7 +1805,7 @@ function Invoke-RMSLidConversionDeployment {
             -PathToCSV $OptionalParameters `
             -LiddedItemColumnName LiddedItem `
             -UnliddedItemColumnName UnliddedItem `
-            -LidItemColumnName LidItem `
+            -LidItemColumnName LidItem -PrimeSQL -ExecuteSQL `
             -Verbose *> "C:\RMSLidConversionOutput\$Parameters.log"
     }
 }
