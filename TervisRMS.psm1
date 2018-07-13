@@ -195,7 +195,7 @@ function Invoke-RMSSQL {
         $SQLServerName,
         $Query
     )
-    $Credential = Get-PasswordstateCredential -PasswordID 56
+    $Credential = Get-PasswordstatePassword -AsCredential -ID 56
     Invoke-MSSQL -Server $SQLServerName -Database $DataBaseName -SQLCommand $Query -Credential $Credential -ConvertFromDataRow
 }
 
@@ -443,7 +443,7 @@ function Stop-SOPOSUSERProcessParallel {
 
     Start-ParallelWork -ScriptBlock {
         param($Parameter) 
-        $Credential = Get-PasswordstateCredential -PasswordID 417
+        $Credential = Get-PasswordstatePassword -AsCredential -ID 417
         Invoke-Command -ComputerName $Parameter -Credential $Credential -ScriptBlock {
             Get-Process -Name SOPOSUSER | Stop-Process -Force
         }
@@ -615,7 +615,7 @@ function Get-SQLRemoteAccessEnabled {
 function Get-OfflineDBTransactionLogName {
     [CmdletBinding()]
     param (
-        [pscredential]$Credential = (Get-PasswordstateCredential -PasswordID 56),
+        [pscredential]$Credential = (Get-PasswordstatePassword -AsCredential -ID 56),
         [Parameter(Mandatory=$true)]$ComputerName
     )
 
