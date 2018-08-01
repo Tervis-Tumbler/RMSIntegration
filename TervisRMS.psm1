@@ -98,6 +98,16 @@ function Get-RegisterComputerObjects {
         Add-Member -MemberType AliasProperty -Name ComputerName -Value Name -Force -PassThru
 }
 
+function Get-BackOfficeComputerObjects {
+    param (
+        [System.UInt16]$MaxAgeInDays = 31
+    )
+
+    Get-ADComputer -Filter {Enabled -EQ $true} -SearchBase "OU=Back Office Computers,OU=Remote Store Computers,OU=Computers,OU=Stores,OU=Departments,DC=tervis,DC=prv" -Properties LastLogonDate,IPv4Address |
+        Where-Object {$_.LastLogonDate -GT (Get-Date).AddDays(-1*$MaxAgeInDays)} |
+        Add-Member -MemberType AliasProperty -Name ComputerName -Value Name -Force -PassThru
+}
+
 function Get-OmittedRegisterComputers {
     param (
         $OnlineRegisterComputers = (Get-RegisterComputers -Online -Enabled)
