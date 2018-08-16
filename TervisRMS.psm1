@@ -1940,3 +1940,39 @@ WHERE ItemLookupCode = '$($_.ItemLookupCode)' AND LastUpdated < DATEADD(hh,-1,GE
 function Get-RMSLidConversionLogDirectory {
     (Get-PasswordstatePassword -ID 5475).GenericField1
 }
+
+function Test-TervisStoreDatabaseConnectivity {
+    param (
+        [Parameter(Mandatory,ValueFromPipeline)]$StoreComputerObject,
+        [switch]$Extended
+    )
+    process {
+        $ConnectionResult = Test-NetConnection -ComputerName $StoreComputerObject.IPV4Address -Port 1433 -WarningAction SilentlyContinue
+        if ($ConnectionResult.TcpTestSucceeded -and $Extended) {
+            $SQLQueryResult = try {
+                $QueryResult = Invoke-RMSSQL -DataBaseName master -SQLServerName $StoreComputerObject.IPV4Address -Query "SELECT 1" -ErrorAction Stop
+                if ($QueryResult) {$true} else {$false}
+            } catch {
+                $false
+            }
+        }
+        [PSCustomObject]@{
+            ComputerName = $StoreComputerObject.ComputerName
+            TcpTestSucceeded = $ConnectionResult.TcpTestSucceeded
+            SQLQuerySucceeded = $SQLQueryResult
+        }
+    }
+}
+
+function Test-TervisStoreNetConnection {
+    $ComputerObjects = Get-RegisterComputerObjects
+    $ComputerObjects += Get-BackOfficeComputerObjects
+
+    foreach ($Computer in $ComputerObjects) {
+        $PingTest = Test-NetConnection -ComputerName $Computer.IPv4Address -WarningAction SilentlyContinue
+        [PSCustomObject]@{
+            ComputerName = $Computer.ComputerName
+            PingSucceeded = $PingTest.PingSucceeded
+        }
+    }
+}
