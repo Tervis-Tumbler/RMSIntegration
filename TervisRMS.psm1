@@ -1851,6 +1851,11 @@ function Invoke-RMSLidQuantityAdjustmentAndInventoryTransferLogs_Osprey {
         }
     }
 
+    $RMSLidConversionLogDirectory = Get-RMSLidConversionLogDirectory
+    New-Item -Path "$RMSLidConversionLogDirectory\$DatabaseName" -ItemType Directory -ErrorAction SilentlyContinue
+    $FinalUPCSet | Where-Object {-not $_.LiddedID} | Out-File "$RMSLidConversionLogDirectory\$DatabaseName\$($DatabaseName)_ExcludedItems.log"
+    $FinalUPCSet = $FinalUPCSet | Where-Object {$_.LiddedID}
+
     Write-Verbose "Building LidItemHashTable"
     $LidItemHashTable = New-LidItemQuantityHashTable -FinalUPCSet $FinalUPCSet
     
@@ -1915,24 +1920,23 @@ WHERE ItemLookupCode = '$($_.ItemLookupCode)' AND LastUpdated < DATEADD(hh,-1,GE
     Write-Verbose "Building Query - InventoryTransferLogQuery for Lids"
     $InventoryTransferLogQuery += $InventoryTransferLogData_Lid | New-RMSInventoryTransferLogQuery
 
-    $RMSLidConversionLogDirectory = Get-RMSLidConversionLogDirectory
-    New-Item -Path "$RMSLidConversionLogDirectory\$DatabaseName" -ItemType Directory -ErrorAction SilentlyContinue
-    $FinalUPCSetExportPath = "$RMSLidConversionLogDirectory\$DatabaseName\$($DatabaseName)_LiddedUnlidded.csv"
-    Write-Verbose "Exporting FinalUPCSet to $FinalUPCSetExportPath"
-    $LidItemExportPath = "$RMSLidConversionLogDirectory\$DatabaseName\$($DatabaseName)_Lids.csv"
-    $InventoryTransferLogQueryExportPath = "$RMSLidConversionLogDirectory\$DatabaseName\$($DatabaseName)_InventoryTransferLogQuery.txt"
-    $FinalUPCSet | Export-Csv -LiteralPath $FinalUPCSetExportPath -Force
-    $LidItemsAdjustedInventory | Export-Csv -Path $LidItemExportPath -Force
-    $InventoryTransferLogQuery | Out-File -FilePath $InventoryTransferLogQueryExportPath -Force
-
+    # $FinalUPCSetExportPath = "$RMSLidConversionLogDirectory\$DatabaseName\$($DatabaseName)_LiddedUnlidded.csv"
+    # Write-Verbose "Exporting FinalUPCSet to $FinalUPCSetExportPath"
+    # $LidItemExportPath = "$RMSLidConversionLogDirectory\$DatabaseName\$($DatabaseName)_Lids.csv"
+    # $InventoryTransferLogQueryExportPath = "$RMSLidConversionLogDirectory\$DatabaseName\$($DatabaseName)_InventoryTransferLogQuery.txt"
+    # $FinalUPCSet | Export-Csv -LiteralPath $FinalUPCSetExportPath -Force
+    # $LidItemsAdjustedInventory | Export-Csv -Path $LidItemExportPath -Force
+    # $InventoryTransferLogQuery | Out-File -FilePath $InventoryTransferLogQueryExportPath -Force
+    # $UpdateLidItemQueryArray | Out-File -FilePath "$RMSLidConversionLogDirectory\$DatabaseName\$($DatabaseName)_LidItemSetQuantityQuery.txt"
+    
+    Write-Verbose "Items to be updated: $($InventoryTransferLogQuery.Count)"
     if ($PrimeSQL -and $ExecuteSQL) {
-         Write-Verbose "DB Query - Setting lid items to adjusted quantity"
-        Invoke-DeploySQLBySetSizeInterval -SQLArray $UpdateLidItemQueryArray -SetSizeInterval $SetSizeInterval @InvokeRMSSQLParameters
+         #Write-Verbose "DB Query - Setting lid items to adjusted quantity"
+        #Invoke-DeploySQLBySetSizeInterval -SQLArray $UpdateLidItemQueryArray -SetSizeInterval $SetSizeInterval @InvokeRMSSQLParameters
 
         Write-Verbose "DB Query - Inserting InventoryTransferLogs"
         Invoke-DeploySQLBySetSizeInterval -SQLArray $InventoryTransferLogQuery -SetSizeInterval $SetSizeInterval -DelayBetweenQueriesInMinutes $TimeDelay @InvokeRMSSQLParameters 
     } else {
-        Write-Verbose "Items to be updated: $($InventoryTransferLogQuery.Count)"
         Write-Warning "ExecuteSQL parameter not set. No changes have been made to the database."
     }
 }
