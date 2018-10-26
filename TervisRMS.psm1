@@ -543,7 +543,7 @@ function Invoke-TervisRegisterComputerGPUpdate {
 
 function Invoke-TervisRegisterComputerGPUpdateParallel {
     param (
-        $RegisterComputers = (Get-RegisterComputers -Online)
+        $RegisterComputers = (Get-RegisterComputerObjects | Select-Object -ExpandProperty ComputerName)
     )
 
     $Responses = Start-ParallelWork -ScriptBlock {
@@ -557,7 +557,7 @@ function Invoke-TervisRegisterComputerGPUpdateParallel {
 
 function Invoke-TervisRegisterComputerRestart {
     param (
-        $RegisterComputers = (Get-RegisterComputers -Online)
+        $RegisterComputers = (Get-RegisterComputerObjects | Select-Object -ExpandProperty ComputerName)
     ) 
 
     $Responses = Start-ParallelWork -ScriptBlock {
@@ -568,16 +568,29 @@ function Invoke-TervisRegisterComputerRestart {
     $Responses
 }
 
+function Invoke-TervisRegisterClosePOSParallel {
+    param (
+        $RegisterComputers = (Get-RegisterComputerObjects | Select-Object -ExpandProperty ComputerName)
+    ) 
+
+    $Responses = Start-ParallelWork -ScriptBlock {
+        param($Parameter) 
+        Invoke-Command -ComputerName $Parameter -ScriptBlock {Get-Process SOPOSUSER | Stop-Process -Force}
+    } -Parameters $RegisterComputers
+
+    $Responses
+}
+
 function Invoke-ConvertOfflineDBToSimpleRecoverModel {
     [CmdletBinding()]
     param (
-        #$RegisterComputer
+        $RegisterComputers
     )
 
-    Write-Verbose -Message "Getting online registers"
-    $OnlineRegisters = Get-RegisterComputers -Online
-    
-    Start-ParallelWork -Parameters $OnlineRegisters -ScriptBlock {
+    #Write-Verbose -Message "Getting online registers"
+    #$OnlineRegisters = Get-RegisterComputers -Online
+
+    Start-ParallelWork -Parameters $RegisterComputers -ScriptBlock {
         param(
             $Parameter
         )
