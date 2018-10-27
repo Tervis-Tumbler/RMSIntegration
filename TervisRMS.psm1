@@ -1993,3 +1993,32 @@ function Test-TervisStoreNetConnection {
         }
     }
 }
+
+function Get-TervisRmsHookAclStatus {
+    param (
+        [Parameter(Mandatory)]$ReferenceComputerName,
+        [Parameter(Mandatory,ValueFromPipelineByPropertyName)]$ComputerName
+    )
+    begin {
+        $Path = 'HKLM:\SOFTWARE\Microsoft\Retail Management System\Store Operations\Hooks'
+        $ReferenceAcl = Invoke-Command -ComputerName $ReferenceComputerName -ScriptBlock {
+            (Get-Acl -Path $using:Path).GetAccessRules($true,$true, [System.Security.Principal.NTAccount])
+        }
+    }
+    process {
+        $DifferenceAcl = Invoke-Command -ComputerName $ComputerName -ScriptBlock {
+            (Get-Acl -Path $using:Path).GetAccessRules($true,$true, [System.Security.Principal.NTAccount])
+        }
+        
+        $IsAclCorrect = if (
+            $ReferenceAcl[0].AccessControlType -eq $DifferenceAcl[0].AccessControlType -and
+            $ReferenceAcl[0].IdentityReference -eq $DifferenceAcl[0].IdentityReference -and
+            $ReferenceAcl[0].RegistryRights -eq $DifferenceAcl[0].RegistryRights
+        ) {$true} else {$false}
+
+        [PSCustomObject]@{
+            ComputerName = $ComputerName
+            IsAclCorrect = $IsAclCorrect
+        }
+    }
+}
