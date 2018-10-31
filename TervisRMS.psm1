@@ -95,7 +95,8 @@ function Get-RegisterComputerObjects {
 
     Get-ADComputer -Filter {Enabled -EQ $true} -SearchBase "OU=Register Computers,OU=Remote Store Computers,OU=Computers,OU=Stores,OU=Departments,DC=tervis,DC=prv" -Properties LastLogonDate,IPv4Address |
         Where-Object {$_.LastLogonDate -GT (Get-Date).AddDays(-1*$MaxAgeInDays)} |
-        Add-Member -MemberType AliasProperty -Name ComputerName -Value Name -Force -PassThru
+        Add-Member -MemberType AliasProperty -Name ComputerName -Value Name -Force -PassThru |
+        Sort-Object -Property ComputerName
 }
 
 function Get-BackOfficeComputerObjects {
@@ -105,7 +106,8 @@ function Get-BackOfficeComputerObjects {
 
     Get-ADComputer -Filter {Enabled -EQ $true} -SearchBase "OU=Back Office Computers,OU=Remote Store Computers,OU=Computers,OU=Stores,OU=Departments,DC=tervis,DC=prv" -Properties LastLogonDate,IPv4Address |
         Where-Object {$_.LastLogonDate -GT (Get-Date).AddDays(-1*$MaxAgeInDays)} |
-        Add-Member -MemberType AliasProperty -Name ComputerName -Value Name -Force -PassThru
+        Add-Member -MemberType AliasProperty -Name ComputerName -Value Name -Force -PassThru |
+        Sort-Object -Property ComputerName
 }
 
 function Get-OmittedRegisterComputers {
