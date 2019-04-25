@@ -45,7 +45,7 @@
 	<SET name="FooterLine6" custom="true" description="Footer Line 6" type="vbString">"purchase with original receipt and product"</SET>
 	<SET name="FooterLine7" custom="true" description="Footer Line 7" type="vbString">"in new and unused condition.  Personalized"</SET>
 	<SET name="FooterLine8" custom="true" description="Footer Line 8" type="vbString">"and customized items are non-refundable."</SET>
-    	<SET name="FooterLine9" custom="true" description="Footer Line 9" type="vbString">"---------------------------------"</SET>
+	<SET name="FooterLine9" custom="true" description="Footer Line 9" type="vbString">"---------------------------------"</SET>
 	<SET name="FooterLine10" custom="true" description="Footer Line 10" type="vbString">"	– Bounceback Offer –   "</SET>
 	<SET name="FooterLine11" custom="true" description="Footer Line 11" type="vbString">"Earn $10 for every $50 spent"</SET>
 	<SET name="FooterLine12" custom="true" description="Footer Line 12" type="vbString">"between 4/29/19 – 5/12/19."</SET>
@@ -56,8 +56,6 @@
 	<SET name="FooterLine17" custom="true" description="Footer Line 17" type="vbString">"Not valid on gift cards / 3rd party items."</SET>
 	<SET name="FooterLine18" custom="true" description="Footer Line 18" type="vbString">"May not be combined"</SET>
 	<SET name="FooterLine19" custom="true" description="Footer Line 19" type="vbString">"with other discounts or offers."</SET>
-	<SET name="LogoHeader" custom="true" description="Logo Filename (Header)" type="vbString">
-
 	<SET name="LogoHeader" custom="true" description="Logo Filename (Header)" type="vbString">
 	</SET>
 	<SET name="LogoFooter" custom="true" description="Logo Filename (Footer)" type="vbString">

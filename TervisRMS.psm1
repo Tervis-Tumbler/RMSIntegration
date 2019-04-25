@@ -2032,7 +2032,7 @@ function Update-TervisRMSSaleReceipt {
         [Parameter(Mandatory,ValueFromPipelineByPropertyName)]$ComputerName
     )
     begin {
-        $ReceiptTemplateData = Get-Content -Path ".\ReceiptTemplates\$ReceiptTemplate.xml"
+        $ReceiptTemplateData = Get-Content -Path "$PSScriptRoot\ReceiptTemplates\$ReceiptTemplate.xml" -Raw -Encoding UTF8
         $Query = "UPDATE Receipt SET TemplateSale = '$ReceiptTemplateData' WHERE ID = 1"
     }
     process {
