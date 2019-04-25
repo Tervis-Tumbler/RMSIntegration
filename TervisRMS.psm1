@@ -2024,3 +2024,19 @@ function Get-TervisRmsHookAclStatus {
         }
     }
 }
+
+function Update-TervisRMSSaleReceipt {
+    param (
+        [Parameter(Mandatory)]
+        [ValidateSet("TervisSaleReceipt", "TervisBBReceipt")]$ReceiptTemplate,
+        [Parameter(Mandatory,ValueFromPipelineByPropertyName)]$ComputerName
+    )
+    begin {
+        $ReceiptTemplateData = Get-Content -Path ".\ReceiptTemplates\$ReceiptTemplate.xml"
+        $Query = "UPDATE Receipt SET TemplateSale = '$ReceiptTemplateData' WHERE ID = 1"
+    }
+    process {
+        $DB = Get-RMSDatabaseName -ComputerName $ComputerName
+        Invoke-RMSSQL -DataBaseName $DB.RMSDatabaseName -SQLServerName $ComputerName -Query $Query
+    }
+}
