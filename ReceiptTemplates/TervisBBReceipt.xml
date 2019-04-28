@@ -56,7 +56,7 @@
 	<SET name="FooterLine17" custom="true" description="Footer Line 17" type="vbString">"Not valid on gift cards or 3rd party items."</SET>
 	<SET name="FooterLine18" custom="true" description="Footer Line 18" type="vbString">"May not be combined"</SET>
 	<SET name="FooterLine19" custom="true" description="Footer Line 19" type="vbString">"with other discounts or offers."</SET>
-	<SET name="FooterLine20" custom="true" description="Footer Line 20" type="vbString">"."</SET>
+	<SET name="FooterLine20" custom="true" description="Footer Line 20" type="vbString">" | "</SET>
 	<SET name="FooterLine21" custom="true" description="Footer Line 21" type="vbString">"Earned amount: _____________</SET>
 	<SET name="LogoHeader" custom="true" description="Logo Filename (Header)" type="vbString">
 	</SET>
