@@ -2042,6 +2042,7 @@ function Update-TervisRMSSaleReceipt {
 "@
     }
     process {
+        Write-Verbose "$ComputerName`: Setting receipt template to $ReceiptTemplate"
         $DB = Get-RMSDatabaseName -ComputerName $ComputerName
         Invoke-RMSSQL -DataBaseName $DB.RMSDatabaseName -SQLServerName $ComputerName -Query $Query
     }
