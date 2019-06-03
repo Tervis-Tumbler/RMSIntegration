@@ -48,9 +48,9 @@
 	<SET name="FooterLine9" custom="true" description="Footer Line 9" type="vbString">"---------------------------------"</SET>
 	<SET name="FooterLine10" custom="true" description="Footer Line 10" type="vbString">"	– Bounceback Offer –   "</SET>
 	<SET name="FooterLine11" custom="true" description="Footer Line 11" type="vbString">"Earn $10 for every $50 spent"</SET>
-	<SET name="FooterLine12" custom="true" description="Footer Line 12" type="vbString">"between 4/29/19 – 5/12/19."</SET>
+	<SET name="FooterLine12" custom="true" description="Footer Line 12" type="vbString">"between 6/3/19 – 6/16/19."</SET>
 	<SET name="FooterLine13" custom="true" description="Footer Line 13" type="vbString">"Redeemable in Tervis stores"</SET>
-	<SET name="FooterLine14" custom="true" description="Footer Line 14" type="vbString">"from 5/19/19 – 5/27/19."</SET>
+	<SET name="FooterLine14" custom="true" description="Footer Line 14" type="vbString">"from 6/23/19 – 7/1/19."</SET>
 	<SET name="FooterLine15" custom="true" description="Footer Line 15" type="vbString">"Must present this original receipt"</SET>
 	<SET name="FooterLine16" custom="true" description="Footer Line 16" type="vbString">"at the time of redemption."</SET>
 	<SET name="FooterLine17" custom="true" description="Footer Line 17" type="vbString">"Not valid on gift cards or 3rd party items."</SET>
